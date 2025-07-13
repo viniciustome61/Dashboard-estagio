@@ -4,66 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard de Controle - Finanças</title>
-    
     <link rel="stylesheet" href="style.css">
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"/>
 </head>
 <body>
 
     <main id="app">
-        <section id="dashboard-orcamento" class="dashboard-tela ativo">
-            <h2 class="titulo-tela"><i class="fa-solid fa-chart-pie"></i> Orçamento Anual</h2>
-            
+        <section id="dashboard-custos-fixos" class="dashboard-tela ativo">
+            <h2 class="titulo-tela"><i class="fa-solid fa-file-invoice-dollar"></i> Custos Fixos - Análise Anual e Mensal</h2>
             <div class="conteudo-tela">
                 <div class="cards-resumo">
                     <div class="card">
-                        <h3>Total Orçado</h3>
-                        <p id="total-orcado">R$ 0,00</p>
+                        <h3>Custo Anual Total (2025)</h3>
+                        <p id="custo-anual-total">R$ 0,00</p>
                     </div>
                     <div class="card">
-                        <h3>Total Gasto</h3>
-                        <p id="total-gasto">R$ 0,00</p>
+                        <h3>Custo Mês Atual (Julho)</h3>
+                        <p id="custo-mes-atual">R$ 0,00</p>
                     </div>
                     <div class="card">
-                        <h3>% de Execução</h3>
-                        <p id="percentual-execucao">0%</p>
+                        <h3>Custo Médio Mensal</h3>
+                        <p id="custo-medio-mensal">R$ 0,00</p>
                     </div>
                 </div>
-                <div class="grafico-container">
-                    <canvas id="graficoOrcamento"></canvas>
+                <div class="graficos-container">
+                    <div class="grafico-wrapper">
+                        <h4>Total Gasto por Empresa (Anual)</h4>
+                        <canvas id="graficoAnualEmpresas"></canvas>
+                    </div>
+                    <div class="grafico-wrapper">
+                        <h4>Evolução dos Custos Mensais (Anual)</h4>
+                        <canvas id="graficoEvolucaoMensal"></canvas>
+                    </div>
                 </div>
             </div>
+        </section>
+
+        <section id="dashboard-orcamento" class="dashboard-tela">
+            <h2 class="titulo-tela"><i class="fa-solid fa-chart-pie"></i> Orçamento Anual por Diretoria</h2>
+            <div class="conteudo-tela">
+                </div>
         </section>
 
         <section id="dashboard-contratos" class="dashboard-tela">
             <h2 class="titulo-tela"><i class="fa-solid fa-file-signature"></i> Controle de Contratos e Convênios</h2>
-
             <div class="conteudo-tela">
-                <h3>Próximos Vencimentos</h3>
-                <div id="lista-contratos">
-                    </div>
-            </div>
-        </section>
-
-        <section id="dashboard-veiculos" class="dashboard-tela">
-            <h2 class="titulo-tela"><i class="fa-solid fa-car"></i> Controle de Frota</h2>
-
-            <div class="conteudo-tela">
-                <h3>Alertas da Frota</h3>
-                <div id="lista-multas">
-                    </div>
                 </div>
         </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
-    
     <script src="script.js" defer></script>
 </body>
 </html>
