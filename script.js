@@ -1,39 +1,26 @@
 // --- CONFIGURAÇÃO INICIAL ---
-// Substitua estas URLs pelas URLs geradas pelas suas planilhas no Google Sheets
-// Lembre-se: Arquivo > Compartilhar > Publicar na web > Selecione a página > Formato CSV
-const URL_ORCAMENTO = 'URL_DA_SUA_PLANILHA_DE_ORCAMENTO_AQUI';
-const URL_CONTRATOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSSLVaScEEmPUg-e0BYlhS_FJ0MpF55i1OeEEQfvyEicMp21r4ijm4spvWI3svP0A/pub?gid=1305007631&single=true&output=csv';
-// const URL_VEICULOS = 'URL_DA_SUA_PLANILHA_DE_VEICULOS_AQUI'; // Descomente quando tiver a planilha
+const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3LwM4EZ_aE0awS6p_0R6XGKysv8CEswX1RtYkP13hM6T-spibHXYNfvZ0QRPN1mjv0-ypVDmY2/pub?output=csv'
 
-// --- FUNÇÃO PRINCIPAL QUE RODA QUANDO A PÁGINA CARREGA ---
-document.addEventListener('DOMContentLoaded', () => {
-    iniciarDashboard();
-});
 
+const ANO_ATUAL = 2025;
+const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+const MES_ATUAL = "Julho";
+
+// --- PONTO DE PARTIDA ---
+document.addEventListener('DOMContentLoaded', iniciarDashboard);
 async function iniciarDashboard() {
-    // Carrega os dados das planilhas em paralelo para mais velocidade
-    const [dadosOrcamento, dadosContratos] = await Promise.all([
-        carregarDados(URL_ORCAMENTO),
-        carregarDados(URL_CONTRATOS),
-        // carregarDados(URL_VEICULOS) // Descomente quando tiver a planilha
-    ]);
-
-    // Se os dados foram carregados com sucesso, renderiza os painéis
-    if (dadosOrcamento) {
-        renderizarPainelOrcamento(dadosOrcamento);
+    const dadosCustosFixos = await carregarDados(URL_CUSTOS_FIXOS);
+    
+    if (dadosCustosFixos) {
+        renderizarPainelCustosFixos(dadosCustosFixos);
     }
-    if (dadosContratos) {
-        renderizarPainelContratos(dadosContratos);
-    }
-    // if (dadosVeiculos) { ... }
-
+    
     // Inicia a rotação das telas a cada 20 segundos
     iniciarRotacao(20000); 
 }
 
-// --- 1. FUNÇÕES DE CARREGAMENTO DE DADOS ---
+// --- FUNÇÃO DE CARREGAMENTO DE DADOS (mesma de antes) ---
 async function carregarDados(url) {
-    // Se a URL for o placeholder, retorna nulo para não dar erro
     if (!url || url.includes('URL_DA_SUA_PLANILHA')) {
         console.warn(`URL não configurada: ${url}`);
         return null;
@@ -41,107 +28,120 @@ async function carregarDados(url) {
     try {
         const resposta = await fetch(url);
         const textoCsv = await resposta.text();
-        // Usa o PapaParse para converter o texto CSV em um array de objetos
-        const { data } = Papa.parse(textoCsv, { header: true, dynamicTyping: true });
+        const { data } = Papa.parse(textoCsv, { header: true, dynamicTyping: true, skipEmptyLines: true });
         return data;
     } catch (erro) {
         console.error(`Erro ao carregar dados da URL: ${url}`, erro);
-        return null; // Retorna nulo em caso de erro
+        return null;
     }
 }
 
-// --- 2. FUNÇÕES DE RENDERIZAÇÃO DE CADA PAINEL ---
+// --- NOVA FUNÇÃO DE RENDERIZAÇÃO PARA CUSTOS FIXOS ---
+function renderizarPainelCustosFixos(dados) {
+    // 1. Filtra dados para o ano atual
+    const dadosAnoAtual = dados.filter(d => d.Ano === ANO_ATUAL);
 
-// PAINEL DE ORÇAMENTO
-function renderizarPainelOrcamento(dados) {
-    // Cálculos dos cards de resumo
-    const totalOrcado = dados.reduce((soma, item) => soma + item.Orcamento, 0);
-    const totalGasto = dados.reduce((soma, item) => soma + item.Gasto, 0);
-    const percentualExecucao = totalOrcado > 0 ? (totalGasto / totalOrcado) * 100 : 0;
+    // 2. Calcula e renderiza os cards de resumo
+    const custoAnualTotal = dadosAnoAtual.reduce((soma, item) => soma + item.ValorGasto, 0);
+    const custoMesAtual = dadosAnoAtual.filter(d => d.Mes === MES_ATUAL).reduce((soma, item) => soma + item.ValorGasto, 0);
+    const custoMedioMensal = custoAnualTotal > 0 ? custoAnualTotal / MESES.indexOf(MES_ATUAL) + 1 : 0; // Média até o mês atual
 
-    // Atualiza os textos dos cards no HTML
-    document.getElementById('total-orcado').textContent = totalOrcado.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('total-gasto').textContent = totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('percentual-execucao').textContent = `${percentualExecucao.toFixed(1)}%`;
+    document.getElementById('custo-anual-total').textContent = formatarMoeda(custoAnualTotal);
+    document.getElementById('custo-mes-atual').textContent = formatarMoeda(custoMesAtual);
+    document.getElementById('custo-medio-mensal').textContent = formatarMoeda(custoMedioMensal);
 
-    // Prepara os dados para o gráfico
-    const labels = dados.map(item => item.Diretoria);
-    const dataGastos = dados.map(item => item.Gasto);
+    // 3. Processa dados para o Gráfico Anual por Empresa
+    const gastosPorEmpresa = dadosAnoAtual.reduce((acc, item) => {
+        if (!acc[item.Empresa]) {
+            acc[item.Empresa] = 0;
+        }
+        acc[item.Empresa] += item.ValorGasto;
+        return acc;
+    }, {});
 
-    // Renderiza o gráfico com Chart.js
-    const ctx = document.getElementById('graficoOrcamento').getContext('2d');
+    const labelsEmpresas = Object.keys(gastosPorEmpresa);
+    const dataEmpresas = Object.values(gastosPorEmpresa);
+    renderizarGrafico('graficoAnualEmpresas', 'pie', labelsEmpresas, dataEmpresas, 'Gasto Anual');
+    
+    // 4. Processa dados para o Gráfico de Evolução Mensal
+    const gastosPorMes = Array(12).fill(0);
+    dadosAnoAtual.forEach(item => {
+        const indiceMes = MESES.indexOf(item.Mes);
+        if (indiceMes !== -1) {
+            gastosPorMes[indiceMes] += item.ValorGasto;
+        }
+    });
+
+    renderizarGrafico('graficoEvolucaoMensal', 'line', MESES, gastosPorMes, 'Gasto Mensal');
+}
+
+// --- FUNÇÃO GENÉRICA PARA RENDERIZAR GRÁFICOS ---
+// DEPOIS (A SOLUÇÃO)
+function renderizarGrafico(canvasId, tipo, labels, data, labelDataset) {
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const corTextoEixos = '#bdc3c7'; // Um cinza claro para bom contraste
+
     new Chart(ctx, {
-        type: 'bar',
+        type: tipo,
         data: {
             labels: labels,
             datasets: [{
-                label: 'Gasto Atual',
-                data: dataGastos,
-                backgroundColor: '#3498db',
-                borderColor: '#2980b9',
-                borderWidth: 1
+                label: labelDataset,
+                data: data,
+                backgroundColor: tipo === 'line' ? '#3498db50' : ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', '#1abc9c', '#e67e22'],
+                borderColor: '#3498db',
+                fill: tipo === 'line'
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
-            plugins: { legend: { display: false } }
-        }
-    });
-}
-
-// PAINEL DE CONTRATOS
-function renderizarPainelContratos(dados) {
-    const container = document.getElementById('lista-contratos');
-    container.innerHTML = ''; // Limpa o conteúdo anterior
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0); // Zera a hora para comparar apenas os dias
-
-    dados.forEach(contrato => {
-        // Converte a data do formato DD/MM/AAAA para um objeto Date
-        const partesData = contrato.DataFim.split('/');
-        const dataFim = new Date(+partesData[2], partesData[1] - 1, +partesData[0]);
-        
-        const diffTempo = dataFim.getTime() - hoje.getTime();
-        const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
-
-        if (diffDias <= 30) { // Alerta para contratos vencendo em 30 dias ou já vencidos
-            const divAlerta = document.createElement('div');
-            divAlerta.classList.add('alerta');
-            
-            let mensagem = '';
-            if (diffDias < 0) {
-                divAlerta.classList.add('vencido');
-                mensagem = `<strong>${contrato.Empresa}:</strong> Contrato de ${contrato.Servico} <strong>venceu há ${Math.abs(diffDias)} dias</strong>.`;
-            } else {
-                divAlerta.classList.add('vencendo');
-                mensagem = `<strong>${contrato.Empresa}:</strong> Contrato de ${contrato.Servico} vence em <strong>${diffDias} dias</strong> (${dataFim.toLocaleDateString('pt-BR')}).`;
+            plugins: {
+                legend: {
+                    display: tipo !== 'line',
+                    labels: {
+                        color: corTextoEixos // Cor do texto da legenda (para o gráfico de pizza)
+                    }
+                }
+            },
+            // ADICIONE TODO ESTE BLOCO 'SCALES' ABAIXO
+            scales: {
+                x: { // Configurações do eixo X (meses)
+                    ticks: {
+                        color: corTextoEixos // Cor do texto dos meses
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)' // Cor das linhas de grade verticais
+                    }
+                },
+                y: { // Configurações do eixo Y (valores)
+                    ticks: {
+                        color: corTextoEixos // Cor do texto dos valores
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)' // Cor das linhas de grade horizontais
+                    }
+                }
             }
-
-            const p = document.createElement('p');
-            p.innerHTML = mensagem;
-            divAlerta.appendChild(p);
-            container.appendChild(divAlerta);
         }
     });
 }
 
-// --- 3. FUNÇÃO DE ROTAÇÃO DAS TELAS ---
+// --- FUNÇÃO AUXILIAR PARA FORMATAR MOEDA ---
+function formatarMoeda(valor) {
+    return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+// --- FUNÇÃO DE ROTAÇÃO DAS TELAS (mesma de antes) ---
 function iniciarRotacao(intervalo) {
     const telas = document.querySelectorAll('.dashboard-tela');
-    if (telas.length <= 1) return; // Não rotaciona se só tiver 1 tela
+    if (telas.length <= 1) return; 
 
     let telaAtual = 0;
 
     setInterval(() => {
-        // Remove a classe 'ativo' da tela atual
         telas[telaAtual].classList.remove('ativo');
-
-        // Calcula o índice da próxima tela
         telaAtual = (telaAtual + 1) % telas.length;
-
-        // Adiciona a classe 'ativo' para a nova tela, tornando-a visível
         telas[telaAtual].classList.add('ativo');
     }, intervalo);
 }

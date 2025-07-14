@@ -1,4 +1,4 @@
-/* --- RESET E ESTILOS GERAIS --- */
+/* --- ESTILOS GERAIS --- */
 * {
     margin: 0;
     padding: 0;
@@ -7,13 +7,13 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background-color: #1e272e; /* Fundo cinza bem escuro */
-    color: #ecf0f1; /* Cor de texto principal (branco suave) */
+    background-color: #1e272e;
+    color: #ecf0f1;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
-    overflow: hidden; /* Esconde barras de rolagem */
+    overflow: hidden;
 }
 
 /* --- ESTRUTURA PRINCIPAL DO DASHBOARD --- */
@@ -23,82 +23,140 @@ body {
 }
 
 .dashboard-tela {
-    background-color: #2c3e50; /* Fundo principal das telas (azul escuro) */
+    background-color: #2c3e50;
     width: 100%;
     height: 100%;
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    
-    /* Lógica para a rotação das telas */
-    display: none; /* Todas as telas começam escondidas */
     opacity: 0;
-    transition: opacity 0.6s ease-in-out; /* Efeito de fade suave */
+    transition: opacity 0.6s ease-in-out;
+
+    /* A tela fica invisível por padrão (sem display: none) para a animação funcionar */
+    visibility: hidden; 
+    position: absolute; /* Permite que as telas fiquem uma sobre a outra */
+
+    /* Flexbox para gerenciar a altura do título e do conteúdo */
+    display: flex;
+    flex-direction: column;
 }
 
 .dashboard-tela.ativo {
-    display: block; /* Apenas a tela com a classe "ativo" fica visível */
+    /* A tela ativa se torna visível */
     opacity: 1;
+    visibility: visible;
+    position: static; /* Volta ao fluxo normal do documento */
+}
+
+.conteudo-tela {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
 }
 
 .titulo-tela {
-    font-size: 2rem; /* 32px */
+    font-size: 2rem;
     font-weight: 600;
     margin-bottom: 20px;
-    border-bottom: 2px solid #3498db; /* Linha azul abaixo do título */
+    border-bottom: 2px solid #3498db;
     padding-bottom: 10px;
     display: flex;
     align-items: center;
-    gap: 15px; /* Espaço entre o ícone e o texto */
+    gap: 15px;
 }
 
 /* --- COMPONENTES VISUAIS --- */
 
-/* Cards de Resumo (Orçamento) */
 .cards-resumo {
     display: flex;
     gap: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 .card {
-    flex: 1; /* Faz os cards dividirem o espaço igualmente */
-    background-color: #34495e; /* Fundo do card (um pouco mais claro) */
+    flex: 1;
+    background-color: #34495e;
     padding: 20px;
     border-radius: 10px;
     text-align: center;
 }
 
 .card h3 {
-    font-size: 1.1rem; /* 17.6px */
+    font-size: 1.1rem;
     font-weight: 400;
     margin-bottom: 10px;
-    color: #bdc3c7; /* Cor do título do card (cinza claro) */
+    color: #bdc3c7;
 }
 
 .card p {
-    font-size: 2.2rem; /* 35.2px */
+    font-size: 2.2rem;
     font-weight: 600;
     color: #ffffff;
 }
 
-/* Container do Gráfico */
-.grafico-container {
+/* --- ESTILOS PARA A TELA DE CUSTOS FIXOS --- */
+.graficos-container {
+    display: flex;
+    gap: 25px;
     width: 100%;
-    height: calc(100% - 180px); /* Ajuste a altura conforme necessário */
+    flex: 1;
+    min-height: 0;
 }
 
-/* Alertas de Contratos e Multas */
+.grafico-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #34495e;
+    padding: 20px;
+    border-radius: 10px;
+    min-width: 0;
+}
+
+.grafico-wrapper h4 {
+    margin-bottom: 15px;
+    font-weight: 400;
+    color: #bdc3c7;
+}
+
+.grafico-canvas-container {
+    flex: 1;
+    position: relative;
+    width: 100%;
+}
+
+/* --- ESTILOS CORRIGIDOS PARA TELAS PLACEHOLDER --- */
+
+/* 1. Define o layout de Grid para centralizar */
+#dashboard-orcamento .conteudo-tela,
+#dashboard-contratos .conteudo-tela {
+    display: grid;
+    place-items: center;
+}
+
+/* 2. Estiliza o texto placeholder para ficar bem visível */
+#dashboard-orcamento .conteudo-tela p,
+#dashboard-contratos .conteudo-tela p {
+    font-size: 1.5rem;
+    color: #bdc3c7;
+    font-weight: 300;
+}
+
+/* --- ESTILOS PARA ALERTAS (TELA DE CONTRATOS, QUANDO FOR USAR) --- */
 #lista-contratos, #lista-multas {
     display: flex;
     flex-direction: column;
     gap: 15px;
+    width: 100%; /* Garante que a lista ocupe a largura */
 }
 
 .alerta {
     padding: 15px;
     border-radius: 8px;
     border-left: 5px solid;
+    text-align: left;
 }
 
 .alerta p {
@@ -106,11 +164,11 @@ body {
 }
 
 .alerta.vencendo {
-    background-color: #f1c40f30; /* Amarelo com transparência */
+    background-color: #f1c40f30;
     border-left-color: #f1c40f;
 }
 
 .alerta.vencido {
-    background-color: #e74c3c30; /* Vermelho com transparência */
+    background-color: #e74c3c30;
     border-left-color: #e74c3c;
 }
