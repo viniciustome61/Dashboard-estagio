@@ -15,6 +15,7 @@
     <main id="app">
         <section id="dashboard-custos-fixos" class="dashboard-tela ativo">
             <h2 class="titulo-tela"><i class="fa-solid fa-file-invoice-dollar"></i> Custos Fixos - Análise Anual e Mensal</h2>
+            
             <div class="conteudo-tela">
                 <div class="cards-resumo">
                     <div class="card">
@@ -30,14 +31,19 @@
                         <p id="custo-medio-mensal">R$ 0,00</p>
                     </div>
                 </div>
+                
                 <div class="graficos-container">
                     <div class="grafico-wrapper">
                         <h4>Total Gasto por Empresa (Anual)</h4>
-                        <canvas id="graficoAnualEmpresas"></canvas>
+                        <div class="grafico-canvas-container">
+                            <canvas id="graficoAnualEmpresas"></canvas>
+                        </div>
                     </div>
                     <div class="grafico-wrapper">
                         <h4>Evolução dos Custos Mensais (Anual)</h4>
-                        <canvas id="graficoEvolucaoMensal"></canvas>
+                        <div class="grafico-canvas-container">
+                            <canvas id="graficoEvolucaoMensal"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -46,13 +52,15 @@
         <section id="dashboard-orcamento" class="dashboard-tela">
             <h2 class="titulo-tela"><i class="fa-solid fa-chart-pie"></i> Orçamento Anual por Diretoria</h2>
             <div class="conteudo-tela">
-                </div>
+                <p>Painel de Orçamento por Diretoria em construção.</p>
+            </div>
         </section>
 
         <section id="dashboard-contratos" class="dashboard-tela">
-            <h2 class="titulo-tela"><i class="fa-solid fa-file-signature"></i> Controle de Frota</h2>
+            <h2 class="titulo-tela"><i class="fa-solid fa-car"></i> Controle de frota</h2>
             <div class="conteudo-tela">
-                </div>
+                 <p>Painel de Controle de Contratos em construção.</p>
+            </div>
         </section>
     </main>
 

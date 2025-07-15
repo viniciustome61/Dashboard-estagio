@@ -1,8 +1,6 @@
 // --- CONFIGURAÇÃO INICIAL ---
-const URL_CUSTOS_FIXOS = 'URL_DA_SUA_PLANILHA_DE_CUSTOS_FIXOS_AQUI';
-// Mantenha as outras URLs se for usá-las nas outras telas
-// const URL_ORCAMENTO = 'URL_DA_SUA_PLANILHA_DE_ORCAMENTO_AQUI';
-// const URL_CONTRATOS = 'URL_DA_SUA_PLANILHA_DE_CONTRATOS_AQUI';
+const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3LwM4EZ_aE0awS6p_0R6XGKysv8CEswX1RtYkP13hM6T-spibHXYNfvZ0QRPN1mjv0-ypVDmY2/pub?output=csv'
+
 
 const ANO_ATUAL = 2025;
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -10,7 +8,6 @@ const MES_ATUAL = "Julho";
 
 // --- PONTO DE PARTIDA ---
 document.addEventListener('DOMContentLoaded', iniciarDashboard);
-
 async function iniciarDashboard() {
     const dadosCustosFixos = await carregarDados(URL_CUSTOS_FIXOS);
     
@@ -79,8 +76,11 @@ function renderizarPainelCustosFixos(dados) {
 }
 
 // --- FUNÇÃO GENÉRICA PARA RENDERIZAR GRÁFICOS ---
+// DEPOIS (A SOLUÇÃO)
 function renderizarGrafico(canvasId, tipo, labels, data, labelDataset) {
     const ctx = document.getElementById(canvasId).getContext('2d');
+    const corTextoEixos = '#bdc3c7'; // Um cinza claro para bom contraste
+
     new Chart(ctx, {
         type: tipo,
         data: {
@@ -98,13 +98,34 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: tipo !== 'line' // Mostra legenda para pizza/rosca, esconde para linha
+                    display: tipo !== 'line',
+                    labels: {
+                        color: corTextoEixos // Cor do texto da legenda (para o gráfico de pizza)
+                    }
+                }
+            },
+            // ADICIONE TODO ESTE BLOCO 'SCALES' ABAIXO
+            scales: {
+                x: { // Configurações do eixo X (meses)
+                    ticks: {
+                        color: corTextoEixos // Cor do texto dos meses
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)' // Cor das linhas de grade verticais
+                    }
+                },
+                y: { // Configurações do eixo Y (valores)
+                    ticks: {
+                        color: corTextoEixos // Cor do texto dos valores
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)' // Cor das linhas de grade horizontais
+                    }
                 }
             }
         }
     });
 }
-
 
 // --- FUNÇÃO AUXILIAR PARA FORMATAR MOEDA ---
 function formatarMoeda(valor) {
