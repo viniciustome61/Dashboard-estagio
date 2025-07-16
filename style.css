@@ -1,81 +1,123 @@
 /* --- ESTILOS GERAIS --- */
+/* O seletor '*' aplica estas regras a TODOS os elementos da página. */
 * {
     margin: 0;
+    /* Remove as margens externas padrão. */
     padding: 0;
+    /* Remove os preenchimentos internos padrão. */
     box-sizing: border-box;
+    /* Muda como a largura e altura dos elementos são calculadas, tornando os layouts mais previsíveis. */
 }
 
+/* Estilos aplicados ao corpo <body> da página. */
 body {
     font-family: 'Poppins', sans-serif;
+    /* Define a fonte padrão para o projeto. */
     background-color: #1e272e;
+    /* Cor de fundo cinza-escuro para toda a página. */
     color: #ecf0f1;
+    /* Cor padrão do texto (um branco suave). */
     display: flex;
+    /* Ativa o Flexbox para alinhar o conteúdo. */
     justify-content: center;
+    /* Centraliza o conteúdo horizontalmente. */
     align-items: center;
+    /* Centraliza o conteúdo verticalmente. */
     min-height: 100vh;
+    /* Garante que o corpo ocupe pelo menos 100% da altura da tela. */
     overflow: hidden;
+    /* Esconde qualquer barra de rolagem que possa aparecer. */
 }
 
 /* --- ESTRUTURA PRINCIPAL DO DASHBOARD --- */
+
+/* Estilos para o container principal da nossa aplicação. */
 #app {
     width: 95%;
+    /* Ocupa 95% da largura da tela. */
     height: 95vh;
+    /* Ocupa 95% da altura da tela. */
+    display: grid;
+    /* Usamos Grid para controlar o empilhamento das telas. */
+    place-items: center;
+    /* Um atalho do Grid para centralizar o conteúdo. */
 }
 
+/* Estilos aplicados a TODAS as telas do dashboard. */
 .dashboard-tela {
     background-color: #2c3e50;
+    /* Cor de fundo azul-escuro para os painéis. */
     width: 100%;
     height: 100%;
     padding: 25px;
+    /* Espaçamento interno. */
     border-radius: 15px;
+    /* Bordas arredondadas. */
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    opacity: 0;
-    transition: opacity 0.6s ease-in-out;
-
-    /* A tela fica invisível por padrão (sem display: none) para a animação funcionar */
-    visibility: hidden; 
-    position: absolute; /* Permite que as telas fiquem uma sobre a outra */
-
-    /* Flexbox para gerenciar a altura do título e do conteúdo */
+    /* Sombra para dar um efeito de profundidade. */
     display: flex;
+    /* Usa Flexbox para organizar o conteúdo interno (título e corpo). */
     flex-direction: column;
+    /* Organiza os itens em uma coluna (um abaixo do outro). */
+
+    /* --- LÓGICA DE EMPILHAMENTO E TRANSIÇÃO --- */
+    grid-area: 1 / 1;
+    /* Força todas as telas a ocuparem a mesma célula da grade (ficam empilhadas). */
+    opacity: 0;
+    /* Começam invisíveis. */
+    transition: opacity 0.6s ease-in-out;
+    /* Efeito suave de fade ao aparecer/desaparecer. */
+    pointer-events: none;
+    /* Desativa cliques em telas escondidas. */
 }
 
+/* Estilo aplicado APENAS à tela que está ativa. */
 .dashboard-tela.ativo {
-    /* A tela ativa se torna visível */
     opacity: 1;
-    visibility: visible;
-    position: static; /* Volta ao fluxo normal do documento */
+    /* A tela ativa se torna visível. */
+    pointer-events: auto;
+    /* A tela ativa pode ser interagida. */
 }
 
+/* Estilos para a área de conteúdo principal de cada tela. */
 .conteudo-tela {
     display: flex;
     flex-direction: column;
     flex: 1;
+    /* Faz este container ocupar todo o espaço vertical que sobrar. */
     min-height: 0;
+    /* Correção para um bug comum do Flexbox. */
 }
 
+/* Estilos para o título principal de cada tela. */
 .titulo-tela {
     font-size: 2rem;
     font-weight: 600;
     margin-bottom: 20px;
+    /* Espaço abaixo do título. */
     border-bottom: 2px solid #3498db;
+    /* Linha azul decorativa. */
     padding-bottom: 10px;
     display: flex;
     align-items: center;
     gap: 15px;
+    /* Espaço entre o ícone e o texto do título. */
 }
 
 /* --- COMPONENTES VISUAIS --- */
 
+/* Estilos para o container dos cards de resumo. */
 .cards-resumo {
     display: flex;
     gap: 20px;
+    /* Espaço entre os cards. */
     margin-bottom: 20px;
 }
 
+/* Estilos para cada card individual. */
 .card {
     flex: 1;
+    /* Faz cada card ocupar o mesmo espaço. */
     background-color: #34495e;
     padding: 20px;
     border-radius: 10px;
@@ -83,27 +125,34 @@ body {
 }
 
 .card h3 {
+    /* Título do card (ex: "Custo Anual Total"). */
     font-size: 1.1rem;
     font-weight: 400;
     margin-bottom: 10px;
     color: #bdc3c7;
+    /* Cinza claro. */
 }
 
 .card p {
+    /* Valor do card (ex: "R$ 0,00"). */
     font-size: 2.2rem;
     font-weight: 600;
     color: #ffffff;
 }
 
 /* --- ESTILOS PARA A TELA DE CUSTOS FIXOS --- */
+
+/* Container que agrupa os dois gráficos. */
 .graficos-container {
     display: flex;
     gap: 25px;
     width: 100%;
     flex: 1;
+    /* Ocupa o espaço que sobra. */
     min-height: 0;
 }
 
+/* Invólucro de cada gráfico individual. */
 .grafico-wrapper {
     flex: 1;
     display: flex;
@@ -116,59 +165,34 @@ body {
 }
 
 .grafico-wrapper h4 {
+    /* Título de cada gráfico (ex: "Maiores custos") */
     margin-bottom: 15px;
     font-weight: 400;
     color: #bdc3c7;
 }
 
+/* Container da "tela de pintura" do gráfico, para controle de layout. */
 .grafico-canvas-container {
     flex: 1;
     position: relative;
+    /* Essencial para o Chart.js se ajustar corretamente. */
     width: 100%;
 }
 
-/* --- ESTILOS CORRIGIDOS PARA TELAS PLACEHOLDER --- */
+/* --- ESTILOS PARA TELAS PLACEHOLDER (EM CONSTRUÇÃO) --- */
 
-/* 1. Define o layout de Grid para centralizar */
+/* Define o layout de Grid para centralizar o texto "em construção". */
 #dashboard-orcamento .conteudo-tela,
 #dashboard-contratos .conteudo-tela {
     display: grid;
     place-items: center;
+    /* Atalho para centralizar na vertical e horizontal. */
 }
 
-/* 2. Estiliza o texto placeholder para ficar bem visível */
+/* Estiliza o texto placeholder para ficar bem visível. */
 #dashboard-orcamento .conteudo-tela p,
 #dashboard-contratos .conteudo-tela p {
     font-size: 1.5rem;
     color: #bdc3c7;
     font-weight: 300;
-}
-
-/* --- ESTILOS PARA ALERTAS (TELA DE CONTRATOS, QUANDO FOR USAR) --- */
-#lista-contratos, #lista-multas {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    width: 100%; /* Garante que a lista ocupe a largura */
-}
-
-.alerta {
-    padding: 15px;
-    border-radius: 8px;
-    border-left: 5px solid;
-    text-align: left;
-}
-
-.alerta p {
-    font-size: 1.1rem;
-}
-
-.alerta.vencendo {
-    background-color: #f1c40f30;
-    border-left-color: #f1c40f;
-}
-
-.alerta.vencido {
-    background-color: #e74c3c30;
-    border-left-color: #e74c3c;
 }
