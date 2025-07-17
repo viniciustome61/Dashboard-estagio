@@ -9,9 +9,10 @@ const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3
 // const URL_CONTRATOS = 'URL_DA_SUA_PLANILHA_DE_CONTRATOS_AQUI'; // Para a futura tela de contratos.
 
 // Variáveis de configuração que podemos alterar facilmente.
-const ANO_ATUAL = 2025; // O ano que queremos analisar.
+const DATA_ATUAL = new Date(); // Cria um objeto de data com a data e hora atuais
+const ANO_ATUAL = DATA_ATUAL.getFullYear(); // Pega o ano atual do sistema, ex: 2023, 2024, etc.
 const MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-const MES_ATUAL = MESES[new Date().getMonth()]; // Pega o mês atual do sistema, ex: "Janeiro", "Fevereiro", etc.
+const MES_ATUAL = MESES[DATA_ATUAL.getMonth()]; // Pega o mês atual do sistema, ex: "Janeiro", "Fevereiro", etc.
 
 // =======================================================
 // --- PONTO DE PARTIDA DA APLICAÇÃO ---
