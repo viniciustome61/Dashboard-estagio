@@ -20,6 +20,21 @@
 
             <div class="conteudo-tela">
 
+                <div class="filtros-container">
+                    <div class="filtro-item">
+                        <label for="filtro-mes">Mês:</label>
+                        <select id="filtro-mes">
+                        </select>
+                    </div>
+
+                    <div class="filtro-item">
+                        <label for="filtro-empresa">Empresa:</label>
+                        <select id="filtro-empresa">
+                        </select>
+                    </div>
+                    <button id="botao-filtrar">Aplicar Filtros</button>
+                </div>
+
                 <div class="cards-resumo">
                     <div class="card" id="custo-anual-total-card">
                         <h3>Custo Anual Total</h3>
@@ -30,7 +45,7 @@
                         <h3>Custo Mês Atual</h3>
                         <p id="custo-mes-atual">R$ 0,00</p>
                     </div>
-                    
+
                     <div class="card">
                         <h3>Custo Médio Mensal</h3>
                         <p id="custo-medio-mensal">R$ 0,00</p>
@@ -45,7 +60,7 @@
                         </div>
                     </div>
                     <div class="grafico-wrapper">
-                        <h4> Maiores Custos (Anual)</h4>
+                        <h4>Maiores Custos (Anual)</h4>
                         <div class="grafico-canvas-container">
                             <canvas id="graficoEvolucaoMensal"></canvas>
                         </div>
