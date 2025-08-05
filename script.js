@@ -8,6 +8,11 @@ let todosOsDados = [];
 const PALETA_DE_CORES = ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', '#1abc9c', '#e67e22', '#34495e', '#f39c12', '#d35400', '#c0392b', '#8e44ad', '#2980b9', '#27ae60', '#d35400'];
 const mapaDeCores = {};
 
+// --- VARIÁVEIS PARA CONTROLAR A ROTAÇÃO ---
+let temporizadorRotacao = null;
+let temporizadorInatividade = null;
+const TEMPO_DE_INATIVIDADE = 120000; // 2 minutos em milissegundos.
+
 
 // =======================================================
 // --- PONTO DE PARTIDA DA APLICAÇÃO ---
@@ -21,11 +26,55 @@ async function iniciarDashboard() {
         gerarMapaDeCores(todosOsDados);
         popularFiltros(todosOsDados);
         configurarEventListeners(todosOsDados);
+        
+        // A chamada para configurarSidebar() foi REMOVIDA daqui.
+        
         atualizarDashboard(todosOsDados, { mes: 'Todos', empresa: 'Todos' });
+        
+        // A rotação inteligente que pausa com o rato permanece.
+        iniciarRotacaoAutomatica();
+        configurarSensorDeAtividade();
+
     } else {
         console.error("Não foi possível renderizar o painel: Nenhum dado foi carregado ou a planilha está vazia.");
     }
-    iniciarRotacao(120000);
+}
+
+
+// =======================================================
+// --- FUNÇÕES DE ROTAÇÃO E ATIVIDADE ---
+// =======================================================
+function iniciarRotacaoAutomatica() {
+    if (temporizadorRotacao) clearInterval(temporizadorRotacao);
+
+    const telas = document.querySelectorAll('.dashboard-tela');
+    if (telas.length <= 1) return;
+
+    let telaAtual = 0;
+    telas.forEach((tela, index) => {
+        if (tela.classList.contains('ativo')) {
+            telaAtual = index;
+        }
+    });
+
+    temporizadorRotacao = setInterval(() => {
+        telas[telaAtual].classList.remove('ativo');
+        telaAtual = (telaAtual + 1) % telas.length;
+        telas[telaAtual].classList.add('ativo');
+    }, 10000);
+}
+
+function reiniciarTimerDeInatividade() {
+    clearInterval(temporizadorRotacao);
+    clearTimeout(temporizadorInatividade);
+
+    temporizadorInatividade = setTimeout(() => {
+        iniciarRotacaoAutomatica();
+    }, TEMPO_DE_INATIVIDADE);
+}
+
+function configurarSensorDeAtividade() {
+    window.addEventListener('mousemove', reiniciarTimerDeInatividade);
 }
 
 
@@ -74,6 +123,9 @@ function configurarEventListeners(dados) {
     });
 }
 
+// A função configurarSidebar() foi completamente REMOVIDA.
+
+
 function atualizarDashboard(dados, filtros) {
     const anoAtual = new Date().getFullYear();
     const dadosAnoInteiro = dados.filter(d => Number(d.Ano) === anoAtual);
@@ -102,10 +154,7 @@ function atualizarDashboard(dados, filtros) {
     const tituloPainelDireita = document.getElementById('titulo-wrapper-direita');
     const containerDireita = document.getElementById('container-direita');
 
-    // --- LÓGICA FINAL E SIMPLIFICADA ---
-    // Se uma empresa específica for selecionada, mostramos a Visão Detalhada dela.
     if (filtros.empresa !== 'Todos') {
-        // --- MODO: VISÃO DETALHADA ---
         tituloGraficoEsquerda.textContent = `Evolução Mensal - ${filtros.empresa}`;
         tituloPainelDireita.textContent = `Indicadores Chave - ${filtros.empresa}`;
 
@@ -149,7 +198,6 @@ function atualizarDashboard(dados, filtros) {
         }
 
     } else {
-        // --- MODO: VISÃO GERAL --- (Para todos os outros casos)
         tituloGraficoEsquerda.textContent = 'Gasto por Empresa (%) na Seleção';
         tituloPainelDireita.textContent = 'Top 5 Custos na Seleção';
         
@@ -172,10 +220,6 @@ function atualizarDashboard(dados, filtros) {
     }
 }
 
-
-// =======================================================
-// --- FUNÇÕES AUXILIARES ---
-// =======================================================
 async function carregarDados(url) {
     try {
         const resposta = await fetch(url);
@@ -247,16 +291,4 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset) {
 function formatarMoeda(valor) {
     if (typeof valor !== 'number') return valor;
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-}
-
-function iniciarRotacao(intervalo) {
-    const telas = document.querySelectorAll('.dashboard-tela');
-    if (telas.length <= 1) return;
-
-    let telaAtual = 0;
-    setInterval(() => {
-        telas[telaAtual].classList.remove('ativo');
-        telaAtual = (telaAtual + 1) % telas.length;
-        telas[telaAtual].classList.add('ativo');
-    }, intervalo);
 }
