@@ -13,23 +13,20 @@
 </head>
 
 <body>
+
     <main id="app">
         <section id="dashboard-custos-fixos" class="dashboard-tela ativo">
             <h2 class="titulo-tela"><i class="fa-solid fa-file-invoice-dollar"></i> Custos Fixos - Análise Anual e Mensal</h2>
-
             <div class="conteudo-tela">
-
+                
                 <div class="filtros-container">
                     <div class="filtro-item">
                         <label for="filtro-mes">Mês:</label>
-                        <select id="filtro-mes">
-                        </select>
+                        <select id="filtro-mes"></select>
                     </div>
-
                     <div class="filtro-item">
                         <label for="filtro-empresa">Empresa:</label>
-                        <select id="filtro-empresa">
-                        </select>
+                        <select id="filtro-empresa"></select>
                     </div>
                     <button id="botao-filtrar">Aplicar Filtros</button>
                 </div>
@@ -39,12 +36,10 @@
                         <h3>Custo Anual Total</h3>
                         <p id="custo-anual-total">R$ 0,00</p>
                     </div>
-
                     <div class="card" id="custo-mes-atual-card">
-                        <h3>Custo Mês Atual</h3>
+                        <h3>Custo da Seleção</h3>
                         <p id="custo-mes-atual">R$ 0,00</p>
                     </div>
-
                     <div class="card">
                         <h3>Custo Médio Mensal</h3>
                         <p id="custo-medio-mensal">R$ 0,00</p>
@@ -53,13 +48,13 @@
 
                 <div class="graficos-container">
                     <div class="grafico-wrapper">
-                        <h4>Gasto Anual por Empresa (%)</h4>
+                        <h4 id="titulo-grafico-esquerda">Gasto por Empresa (%) na Seleção</h4>
                         <div class="grafico-canvas-container">
                             <canvas id="graficoAnualEmpresas"></canvas>
                         </div>
                     </div>
                     <div class="grafico-wrapper" id="wrapper-direita">
-                        <h4 id="titulo-wrapper-direita">Maiores Custos (Anual)</h4>
+                        <h4 id="titulo-wrapper-direita">Top 5 Custos na Seleção</h4>
                         <div class="grafico-canvas-container" id="container-direita">
                             <canvas id="graficoEvolucaoMensal"></canvas>
                         </div>
@@ -75,10 +70,41 @@
             </div>
         </section>
 
-        <section id="dashboard-contratos" class="dashboard-tela">
+        <section id="dashboard-frota" class="dashboard-tela">
             <h2 class="titulo-tela"><i class="fa-solid fa-car"></i> Controle de Frota</h2>
             <div class="conteudo-tela">
-                <p>Painel de Controle de Frota em construção.</p>
+                
+                <div class="cards-resumo" id="cards-resumo-frota">
+                    <div class="card">
+                        <h5>Total Abastecido (L)</h5>
+                        <p id="frota-total-litros">0</p>
+                    </div>
+                    <div class="card">
+                        <h5>Custo Total Viagens</h5>
+                        <p id="frota-custo-total">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h5>Custo Médio / Litro</h5>
+                        <p id="frota-custo-litro">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h5>Distância Total (Km)</h5>
+                        <p id="frota-total-km">0</p>
+                    </div>
+                </div>
+
+                <div class="frota-grid" id="frota-grid"></div>
+
+                <div class="frota-detalhes" id="frota-detalhes">
+                <button id="fechar-detalhes-frota">X</button>
+                <h3 id="detalhe-modelo">Modelo do Veículo</h3>
+                <ul>
+                    <li><strong>Placa:</strong> <span id="detalhe-placa"></span></li>
+                    <li><strong>Chassi:</strong> <span id="detalhe-chassi"></span></li>
+                    <li><strong>Diretoria:</strong> <span id="detalhe-diretoria"></span></li>
+                    <li><strong>Renavam:</strong> <span id="detalhe-renavam"></span></li>
+                    <li><strong>Revisão:</strong> <span id="detalhe-revisao"></span></li>
+                </ul>       
             </div>
         </section>
     </main>
@@ -87,5 +113,4 @@
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <script src="script.js" defer></script>
 </body>
-
 </html>
