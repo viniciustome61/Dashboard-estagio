@@ -76,8 +76,18 @@ body {
 
 /* --- ESTILOS PARA A TELA DE CONTROLE DE FROTA --- */
 #cards-resumo-frota .card h5 { font-size: 0.9rem; font-weight: 400; color: #bdc3c7; margin-bottom: 5px; text-transform: uppercase; }
-.frota-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; padding-top: 20px; flex: 1; overflow-y: auto; }
-.veiculo-card { background-color: #34495e; border-radius: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; position: relative; border: 3px solid transparent; }
+/* --- ESTILO CORRIGIDO PARA A GRELHA DE VEÍCULOS 4x2 --- */
+.frota-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Define 4 colunas de tamanho igual */
+    grid-template-rows: repeat(2, 1fr);    /* Define 2 linhas de tamanho igual */
+    gap: 20px;                             /* Espaçamento entre os cards */
+    padding-top: 20px;
+    flex: 1;
+}
+.veiculo-card {
+     background-color: #34495e; 
+     border-radius: 10px; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; overflow: hidden; position: relative; border: 3px solid transparent; }
 .veiculo-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }
 .veiculo-card.revisao-ok { border-color: #2ecc71; }
 .veiculo-card.revisao-pendente { border-color: #f1c40f; }

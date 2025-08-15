@@ -5,10 +5,12 @@ const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3
 const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?output=csv';
 const URL_COMBUSTIVEL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1_Cwkcog1mJahMhTfLdrwtyWyTPE54CuR99bodFgnJCauwZ0DZ2-9poonfKTwfC5jG2Kci53OGhJV/pub?output=csv';
 
+// --- Parâmetros da Lógica ---
 const REVISAO_INTERVALO_KM = 10000;
 const REVISAO_ALERTA_KM = 2000;
 const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
+// Variáveis globais para armazenar os dados carregados
 let todosOsDadosCustos = [];
 let todosOsDadosVeiculos = [];
 let todosOsDadosCombustivel = [];
@@ -16,6 +18,7 @@ let todosOsDadosCombustivel = [];
 const PALETA_DE_CORES = ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', '#1abc9c', '#e67e22', '#055bb1ff', '#f39c12', '#d35400', '#c0392b', '#8e44ad', '#2980b9', '#27ae60', '#d35400'];
 const mapaDeCores = {};
 
+// --- VARIÁVEIS PARA CONTROLAR A ROTAÇÃO ---
 let temporizadorRotacao = null;
 let temporizadorInatividade = null;
 const TEMPO_DE_INATIVIDADE = 120000;
@@ -33,12 +36,14 @@ async function iniciarDashboard() {
         carregarDados(URL_COMBUSTIVEL)
     ]);
 
+    // Lógica da primeira tela (Custos Fixos)
     if (todosOsDadosCustos) {
         gerarMapaDeCores(todosOsDadosCustos);
         popularFiltros(todosOsDadosCustos);
         configurarEventListeners(todosOsDadosCustos);
     }
     
+    // Inicia a rotação inteligente
     iniciarRotacao(20000);
     configurarSensorDeAtividade();
 }
@@ -78,7 +83,7 @@ function reiniciarTimerDeInatividade() {
     clearInterval(temporizadorRotacao);
     clearTimeout(temporizadorInatividade);
     temporizadorInatividade = setTimeout(() => {
-        iniciarRotacao(20000);
+        iniciarRotacao(20000); // Reinicia a rotação com o mesmo intervalo
     }, TEMPO_DE_INATIVIDADE);
 }
 
@@ -97,6 +102,7 @@ async function carregarDados(url) {
         const resposta = await fetch(url);
         if (!resposta.ok) { throw new Error(`Falha na rede: ${resposta.statusText}`); }
         const textoCsv = await resposta.text();
+        // Usa o header: true para que o PapaParse leia a primeira linha como cabeçalho
         const { data } = Papa.parse(textoCsv, { header: true, skipEmptyLines: true });
         return data;
     } catch (erro) {
@@ -105,17 +111,10 @@ async function carregarDados(url) {
     }
 }
 
-/**
- * FUNÇÃO ATUALIZADA: Converte uma string de moeda (ex: "R$ 1.330,00" ou "1330.00") para um número (1330.00).
- * @param {string|number} valor - O valor vindo da planilha.
- * @returns {number} - O valor convertido para um número.
- */
 function parseNumerico(valor) {
     if (typeof valor === 'number') return valor;
     if (typeof valor !== 'string' || !valor.trim()) return 0;
-
-    const valorStr = String(valor).trim().replace("R$", "").trim();
-    
+    const valorStr = String(valor).trim();
     if (valorStr.includes(',')) {
         return parseFloat(valorStr.replace(/\./g, '').replace(',', '.'));
     }
@@ -250,11 +249,9 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
 
     const dadosCombustivelMes = dadosCombustivel.filter(d => {
         if (!d['Data/Hora']) return false;
-        const dataStr = String(d['Data/Hora']);
-        const match = dataStr.match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
-        if(!match) return false;
-        const mes = parseInt(match[2], 10);
-        return MESES_ORDENADOS[mes - 1] === mesAtual;
+        const [dia, mes] = String(d['Data/Hora']).split('/');
+        if (!mes) return false;
+        return MESES_ORDENADOS[parseInt(mes, 10) - 1] === mesAtual;
     });
 
     const totalLitrosFrota = dadosCombustivelMes.reduce((soma, item) => soma + parseNumerico(item['Total de litros']), 0);
