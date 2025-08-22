@@ -21,7 +21,8 @@ const mapaDeCores = {};
 // --- VARIÁVEIS PARA CONTROLAR A ROTAÇÃO ---
 let temporizadorRotacao = null;
 let temporizadorInatividade = null;
-const TEMPO_DE_INATIVIDADE = 120000;
+const TEMPO_DE_INATIVIDADE = 20000; // 20 segundos de inatividade
+
 
 
 // =======================================================
@@ -93,7 +94,7 @@ function configurarSensorDeAtividade() {
 
 
 // =======================================================
-// --- FUNÇÕES DE LÓGICA ---
+// --- FUNÇÕES DE LÓGICA  --- 
 // =======================================================
 
 async function carregarDados(url) {
@@ -223,7 +224,7 @@ function atualizarDashboard(dados, filtros) {
         }
     } else {
         tituloGraficoEsquerda.textContent = 'Gasto por Empresa (%) na Seleção';
-        tituloPainelDireita.textContent = 'Top 5 Custos na Seleção';
+        tituloPainelDireita.textContent = 'Maiores 5 Custos na Seleção';
         containerDireita.innerHTML = '<canvas id="graficoEvolucaoMensal"></canvas>';
         const gastosPorEmpresa = dadosParaVisao.reduce((acc, item) => {
             if (!acc[item.Empresa]) { acc[item.Empresa] = 0; }
@@ -247,12 +248,29 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
     frotaGrid.innerHTML = '';
     const mesAtual = MESES_ORDENADOS[new Date().getMonth()];
 
-    const dadosCombustivelMes = dadosCombustivel.filter(d => {
-        if (!d['Data/Hora']) return false;
-        const [dia, mes] = String(d['Data/Hora']).split('/');
-        if (!mes) return false;
-        return MESES_ORDENADOS[parseInt(mes, 10) - 1] === mesAtual;
-    });
+   const dadosCombustivelMes = dadosCombustivel.filter(d => {
+    if (!d['Data/Hora']) return false;
+    
+    // Pega a string da data, ex: "22/08/2025 08:30:00"
+    const dataString = String(d['Data/Hora']);
+    
+    // Separa a data da hora
+    const [dataPart] = dataString.split(' '); // Pega só "22/08/2025"
+    
+    // Divide a data em dia, mês e ano
+    const [dia, mes, ano] = dataPart.split('/');
+    
+    // Remonta a data em um formato que o JavaScript entende sem erros (AAAA-MM-DD)
+    const dataFormatada = `${ano}-${mes}-${dia}`;
+    
+    // Cria o objeto de data com segurança
+    const dataAbastecimento = new Date(dataFormatada);
+    
+    // O getMonth() retorna o mês de 0 (Janeiro) a 11 (Dezembro)
+    const mesAbastecimento = MESES_ORDENADOS[dataAbastecimento.getMonth()];
+    
+    return mesAbastecimento === mesAtual;
+});
 
     const totalLitrosFrota = dadosCombustivelMes.reduce((soma, item) => soma + parseNumerico(item['Total de litros']), 0);
     const custoTotalFrota = dadosCombustivelMes.reduce((soma, item) => soma + parseNumerico(item['Custo total de combustível']), 0);
@@ -291,6 +309,7 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
             document.getElementById('detalhe-modelo').textContent = veiculo.Modelo;
             document.getElementById('detalhe-placa').textContent = veiculo.Placa;
             document.getElementById('detalhe-chassi').textContent = veiculo.Chassi;
+            document.getElementById('detalhe-diretoria').textContent = veiculo.Diretoria; 
             document.getElementById('detalhe-renavam').textContent = veiculo.Renavam;
             document.getElementById('detalhe-revisao').textContent = statusTexto;
             document.getElementById('frota-detalhes').classList.add('visivel');
