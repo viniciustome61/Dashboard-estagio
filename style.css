@@ -217,8 +217,9 @@ body {
 }
 .veiculo-card img {
     width: 100%;
-    height: 120px;
+    height: 240px;
     object-fit: cover;
+    display:block
 }
 .veiculo-info {
     padding: 15px;
