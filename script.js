@@ -7,6 +7,9 @@ const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3
 const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?output=csv';
 const URL_COMBUSTIVEL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1_Cwkcog1mJahMhTfLdrwtyWyTPE54CuR99bodFgnJCauwZ0DZ2-9poonfKTwfC5jG2Kci53OGhJV/pub?output=csv';
 
+// --- MELHORIA APLICADA: Caminho das imagens centralizado para fácil manutenção ---
+const CAMINHO_IMAGENS = 'Imagens veiculos/';
+
 // --- Parâmetros da Lógica de Negócio ---
 
 // Define o intervalo em KM para cada revisão periódica.
@@ -34,7 +37,7 @@ let temporizadorRotacao = null;
 // Armazena o temporizador que detecta inatividade do usuário.
 let temporizadorInatividade = null;
 // Tempo em milissegundos que o sistema espera sem atividade do usuário para reiniciar a rotação.
-const TEMPO_DE_INATIVIDADE = 20000; // 20 segundos
+const TEMPO_DE_INATIVIDADE = 10000; // 10 segundos
 
 
 // =======================================================
@@ -65,7 +68,7 @@ async function iniciarDashboard() {
     }
     
     // Inicia a rotação automática entre as telas do dashboard.
-    iniciarRotacao(20000); // Troca de tela a cada 20 segundos
+    iniciarRotacao(10000); // Troca de tela a cada 10 segundos
     // Configura o sensor de movimento do mouse para pausar a rotação quando o usuário está ativo.
     configurarSensorDeAtividade();
 }
@@ -342,6 +345,7 @@ function atualizarDashboard(dados, filtros) {
 }
 
 // --- Funções da Tela de Frota ---
+// SUBSTITUA TODA A SUA FUNÇÃO 'renderizarPainelFrota' POR ESTA VERSÃO
 
 /**
  * Renderiza todo o conteúdo da tela de Controle de Frota.
@@ -354,18 +358,18 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
     frotaGrid.innerHTML = ''; // Limpa o grid antes de adicionar os novos cards
     const mesAtual = MESES_ORDENADOS[new Date().getMonth()];
 
-    // Filtra os dados de combustível para pegar apenas os registros do mês atual.
+    // Filtra os dados de combustível para pegar apenas os registros do mês atual (código robusto)
     const dadosCombustivelMes = dadosCombustivel.filter(d => {
-        if (!d['Data/Hora']) return false;
-        
-        // Lógica segura para processar a data no formato DD/MM/AAAA
+        if (!d || !d['Data/Hora']) { return false; }
         const dataString = String(d['Data/Hora']);
         const [dataPart] = dataString.split(' ');
+        if (!dataPart || !dataPart.includes('/')) { return false; }
         const [dia, mes, ano] = dataPart.split('/');
+        if(!dia || !mes || !ano) { return false; }
         const dataFormatada = `${ano}-${mes}-${dia}`;
         const dataAbastecimento = new Date(dataFormatada);
+        if (isNaN(dataAbastecimento.getTime())) { return false; }
         const mesAbastecimento = MESES_ORDENADOS[dataAbastecimento.getMonth()];
-        
         return mesAbastecimento === mesAtual;
     });
 
@@ -382,7 +386,6 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
 
     // Itera sobre cada veículo para criar um card para ele.
     dadosVeiculos.forEach(veiculo => {
-        // Lógica para determinar o status da revisão.
         const odometro = parseNumerico(veiculo['ODÔMETRO']);
         const ultimaRevisao = parseNumerico(veiculo['ULTIMA REVISÃO (KM)']);
         const proximaRevisao = ultimaRevisao + REVISAO_INTERVALO_KM;
@@ -402,12 +405,19 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
             statusMarcador = 'revisar';
         }
         
-        // Cria o elemento HTML do card do veículo.
         const card = document.createElement('div');
         card.className = `veiculo-card ${statusClasse}`;
-        card.innerHTML = `<div class="status-revisao ${statusMarcador}" title="${statusTexto}"></div><img src="https://via.placeholder.com/300x200.png?text=${veiculo.Modelo}" alt="${veiculo.Modelo}"><div class="veiculo-info"><h5>${veiculo.Modelo}</h5><p>${veiculo.Placa}</p></div>`;
 
-        // Adiciona um evento de clique ao card para mostrar a janela de detalhes.
+        const nomeImagem = veiculo['Nome da Imagem'] || veiculo['ImagemURL'];
+        card.innerHTML = `<div class="status-revisao ${statusMarcador}" title="${statusTexto}"></div>
+                          <img src="${CAMINHO_IMAGENS}${nomeImagem}" 
+                               onerror="this.src='${CAMINHO_IMAGENS}placeholder.png';" 
+                               alt="${veiculo.Modelo}">
+                          <div class="veiculo-info">
+                              <h5>${veiculo.Modelo}</h5>
+                              <p>${veiculo.Placa}</p>
+                          </div>`;
+
         card.addEventListener('click', () => { 
             document.getElementById('detalhe-modelo').textContent = veiculo.Modelo;
             document.getElementById('detalhe-placa').textContent = veiculo.Placa;
@@ -421,11 +431,16 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
         frotaGrid.appendChild(card);
     });
 
-    // Configura o botão para fechar a janela de detalhes.
+    // Evento de clique do botão de fechar, declarado uma única vez.
     document.getElementById('fechar-detalhes-frota').addEventListener('click', () => { 
         document.getElementById('frota-detalhes').classList.remove('visivel');
      });
 }
+    // Configura o botão para fechar a janela de detalhes.
+    document.getElementById('fechar-detalhes-frota').addEventListener('click', () => { 
+        document.getElementById('frota-detalhes').classList.remove('visivel');
+     });
+
 
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
