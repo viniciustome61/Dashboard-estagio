@@ -7,6 +7,9 @@
 const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3LwM4EZ_aE0awS6p_0R6XGKysv8CEswX1RtYkP13hM6T-spibHXYNfvZ0QRPN1mjv0-ypVDmY2/pub?output=csv';
 const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?output=csv';
 const URL_COMBUSTIVEL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ1_Cwkcog1mJahMhTfLdrwtyWyTPE54CuR99bodFgnJCauwZ0DZ2-9poonfKTwfC5jG2Kci53OGhJV/pub?output=csv';
+const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRSn9z52SmwwstiOq194utY7usOYAKU5yryxM6A1-tAdubIFFSu6OecdHwB6EYresL0HoD02ecVlDDS/pub?gid=612120204&single=true&output=csv'
+let todosOsDadosDesempenho = []; // guarda os novos dados 
+
 
 // --- MELHORIA APLICADA: Caminho das imagens centralizado para fácil manutenção ---
 const CAMINHO_IMAGENS = 'Imagens veiculos/';
@@ -32,7 +35,7 @@ const mapaDeCores = {};
 // --- VARIÁVEIS PARA CONTROLAR A ROTAÇÃO DAS TELAS ---
 let temporizadorRotacao = null;
 let temporizadorInatividade = null;
-const TEMPO_DE_INATIVIDADE = 10000; // 10 segundos
+const TEMPO_DE_INATIVIDADE = 10000; // 10 segundos do tempo de inatividade 
 
 
 // =======================================================
@@ -41,25 +44,34 @@ const TEMPO_DE_INATIVIDADE = 10000; // 10 segundos
 
 document.addEventListener('DOMContentLoaded', iniciarDashboard);
 
+// Versão atualizada da função iniciarDashboard
 async function iniciarDashboard() {
     try {
-        [todosOsDadosCustos, todosOsDadosVeiculos, todosOsDadosCombustivel] = await Promise.all([
+        // Adicionamos o carregamento dos novos dados aqui
+        [todosOsDadosCustos, todosOsDadosVeiculos, todosOsDadosCombustivel, todosOsDadosDesempenho] = await Promise.all([
             carregarDados(URL_CUSTOS_FIXOS, 'custos'),
             carregarDados(URL_PAINEL_VEICULOS, 'veiculos'),
-            carregarDados(URL_COMBUSTIVEL, 'combustivel')
+            carregarDados(URL_COMBUSTIVEL, 'combustivel'),
+            carregarDados(URL_DESEMPENHO_FROTA, 'desempenho') 
         ]);
+
+        
+        if (todosOsDadosDesempenho) {
+            todosOsDadosDesempenho = limparDadosDesempenho(todosOsDadosDesempenho);
+            popularFiltrosDesempenho(todosOsDadosDesempenho);
+            configurarEventListenerDesempenho();
+        }
 
         if (todosOsDadosCustos) {
             gerarMapaDeCores(todosOsDadosCustos);
             popularFiltros(todosOsDadosCustos);
-            configurarEventListeners(); // Não precisa passar os dados aqui
+            configurarEventListeners();
         }
         
         iniciarRotacao(10000); 
         configurarSensorDeAtividade();
     } catch (erro) {
         console.error("Erro fatal ao iniciar o dashboard:", erro);
-        // Opcional: exibir uma mensagem de erro na tela para o usuário
         const app = document.getElementById('app');
         if (app) {
             app.innerHTML = `<div class="mensagem-erro">
@@ -111,6 +123,19 @@ function reiniciarTimerDeInatividade() {
 function configurarSensorDeAtividade() {
     window.addEventListener('mousemove', reiniciarTimerDeInatividade);
 }
+
+// Versão atualizada do 'executarAtualizacoes' dentro de 'iniciarRotacao'
+const executarAtualizacoes = () => {
+    const telaAtiva = telas[telaAtual];
+    
+    if (telaAtiva.id === 'dashboard-custos-fixos' && todosOsDadosCustos) {
+        atualizarDashboard(todosOsDadosCustos, { mes: 'Todos', empresa: 'Todos' });
+    } else if (telaAtiva.id === 'dashboard-frota' && todosOsDadosVeiculos && todosOsDadosCombustivel) {
+        renderizarPainelFrota(todosOsDadosVeiculos, todosOsDadosCombustivel);
+    } else if (telaAtiva.id === 'dashboard-desempenho-frota' && todosOsDadosDesempenho) { // <-- ADICIONE ESTE ELSE IF
+        atualizarPainelDesempenho();
+    }
+};
 
 
 // =======================================================
@@ -173,7 +198,148 @@ function formatarMoeda(valor) {
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+// --- Funções da Nova Tela de Desempenho ---
 
+/**
+ * Limpa os dados de desempenho, principalmente removendo espaços extras dos nomes das colunas.
+ * @param {Array} dados - Os dados brutos da planilha.
+ * @returns {Array} Os dados com os nomes das colunas limpos.
+ */
+function limparDadosDesempenho(dados) {
+    return dados.map(item => {
+        const itemLimpo = {};
+        for (const chave in item) {
+            // Remove espaços no início e no fim de cada nome de coluna
+            const chaveLimpa = chave.trim();
+            itemLimpo[chaveLimpa] = item[chave];
+        }
+        return itemLimpo;
+    });
+}
+
+/**
+ * Popula os menus de filtro da tela de desempenho com dados únicos da planilha.
+ * @param {Array} dados - Os dados de desempenho já limpos.
+ */
+function popularFiltrosDesempenho(dados) {
+    const filtroMes = document.getElementById('filtro-mes-desempenho');
+    const filtroDiretoria = document.getElementById('filtro-diretoria-desempenho');
+    const filtroVeiculo = document.getElementById('filtro-veiculo-desempenho');
+    const filtroMotorista = document.getElementById('filtro-motorista-desempenho');
+
+    // --- CORREÇÃO APLICADA AQUI ---
+    // Primeiro, filtramos o array 'dados' para garantir que estamos trabalhando
+    // apenas com linhas que realmente têm um valor na coluna 'Data/Hora'.
+    const dadosComData = dados.filter(item => item['Data/Hora'] && item['Data/Hora'].trim() !== '');
+
+    // Agora, usamos esse novo array seguro ('dadosComData') para extrair os valores únicos.
+    const mesesUnicos = [...new Set(dadosComData.map(item => MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()]))].sort((a, b) => MESES_ORDENADOS.indexOf(a) - MESES_ORDENADOS.indexOf(b));
+    const diretoriasUnicas = [...new Set(dadosComData.map(item => item.Diretoria))].sort();
+    const veiculosUnicos = [...new Set(dadosComData.map(item => item.Veiculo))].sort();
+    const motoristasUnicos = [...new Set(dadosComData.map(item => item.Motorista))].sort();
+
+    // Função auxiliar para criar as opções (sem alteração)
+    const criarOpcoes = (selectElement, opcoes, valorPadrao = 'Todos') => {
+        selectElement.innerHTML = `<option value="Todos">${valorPadrao}</option>`;
+        opcoes.forEach(opcao => {
+            if (opcao) { // Garante que não adicione opções vazias
+                const option = document.createElement('option');
+                option.value = opcao;
+                option.textContent = opcao;
+                selectElement.appendChild(option);
+            }
+        });
+    };
+
+    criarOpcoes(filtroMes, mesesUnicos, 'Todos os Meses');
+    criarOpcoes(filtroDiretoria, diretoriasUnicas, 'Todas as Diretorias');
+    criarOpcoes(filtroVeiculo, veiculosUnicos, 'Todos os Veículos');
+    criarOpcoes(filtroMotorista, motoristasUnicos, 'Todos os Motoristas');
+}
+
+
+// Versão atualizada
+function configurarEventListenerDesempenho() {
+    const botaoFiltrar = document.getElementById('botao-filtrar-desempenho');
+    if (botaoFiltrar) {
+        botaoFiltrar.addEventListener('click', () => {
+            // Agora chamamos a função de análise de verdade
+            atualizarPainelDesempenho();
+        });
+    }
+}
+
+/**
+ * Filtra os dados, calcula os KPIs, agrega os dados para os gráficos
+ * e atualiza todos os elementos visuais da tela de desempenho.
+ */
+/**
+ * Filtra os dados, calcula os KPIs, agrega os dados para os gráficos
+ * e atualiza todos os elementos visuais da tela de desempenho.
+ */
+function atualizarPainelDesempenho() {
+    // 1. Ler os valores selecionados nos filtros
+    const mesSelecionado = document.getElementById('filtro-mes-desempenho').value;
+    const diretoriaSelecionada = document.getElementById('filtro-diretoria-desempenho').value;
+    const veiculoSelecionado = document.getElementById('filtro-veiculo-desempenho').value;
+    const motoristaSelecionado = document.getElementById('filtro-motorista-desempenho').value;
+
+    // 2. Filtrar os dados com base na seleção
+    let dadosFiltrados = todosOsDadosDesempenho.filter(item => {
+        // Ignora linhas sem data para segurança
+        if (!item['Data/Hora']) return false;
+        
+        const mesDoItem = MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()];
+
+        const correspondeMes = (mesSelecionado === 'Todos') || (mesDoItem === mesSelecionado);
+        const correspondeDiretoria = (diretoriaSelecionada === 'Todos') || (item.Diretoria === diretoriaSelecionada);
+        const correspondeVeiculo = (veiculoSelecionado === 'Todos') || (item.Veiculo === veiculoSelecionado);
+        const correspondeMotorista = (motoristaSelecionado === 'Todos') || (item.Motorista === motoristaSelecionado);
+
+        return correspondeMes && correspondeDiretoria && correspondeVeiculo && correspondeMotorista;
+    });
+
+    // 3. Calcular os KPIs -- COM OS NOMES CORRETOS DA SUA PLANILHA
+    const custoTotal = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Custo total de combustível']), 0);
+    const totalLitros = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Total de litros']), 0);
+    const totalKm = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Quilometragem']), 0);
+    const custoKm = totalKm > 0 ? custoTotal / totalKm : 0;
+
+    // 4. Atualizar os cards de KPI no HTML
+    document.getElementById('desempenho-custo-total').textContent = formatarMoeda(custoTotal);
+    document.getElementById('desempenho-total-litros').textContent = totalLitros.toFixed(2);
+    document.getElementById('desempenho-total-km').textContent = `${totalKm.toFixed(0)} km`;
+    document.getElementById('desempenho-custo-km').textContent = formatarMoeda(custoKm);
+
+    // 5. Preparar dados para os gráficos -- COM OS NOMES CORRETOS
+    // Gráfico de Gasto por Diretoria
+    const gastoPorDiretoria = dadosFiltrados.reduce((acc, item) => {
+        if (!acc[item.Diretoria]) {
+            acc[item.Diretoria] = 0;
+        }
+        // USA O NOME CORRETO AQUI
+        acc[item.Diretoria] += parseNumerico(item['Custo total de combustível']);
+        return acc;
+    }, {});
+    
+    // Gráfico Top 5 Veículos por Custo
+    const gastoPorVeiculo = dadosFiltrados.reduce((acc, item) => {
+        if (!acc[item.Veiculo]) {
+            acc[item.Veiculo] = 0;
+        }
+        // E AQUI TAMBÉM
+        acc[item.Veiculo] += parseNumerico(item['Custo total de combustível']);
+        return acc;
+    }, {});
+
+    const top5Veiculos = Object.entries(gastoPorVeiculo)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, 5);
+
+    // 6. Renderizar os gráficos
+    renderizarGrafico('grafico-gasto-diretoria', 'pie', Object.keys(gastoPorDiretoria), Object.values(gastoPorDiretoria), 'Gasto por Diretoria');
+    renderizarGrafico('grafico-top-veiculos', 'bar', top5Veiculos.map(item => item[0]), top5Veiculos.map(item => item[1]), 'Top 5 Veículos');
+}
 // --- Funções da Tela de Custos Fixos ---
 
 function gerarMapaDeCores(dados) {
@@ -293,7 +459,6 @@ function atualizarDashboard(dados, filtros) {
     }
 }
 
-
 // --- Funções da Tela de Frota ---
 
 function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
@@ -364,6 +529,7 @@ function renderizarPainelFrota(dadosVeiculos, dadosCombustivel) {
             document.getElementById('detalhe-chassi').textContent = veiculo.Chassi;
             document.getElementById('detalhe-diretoria').textContent = veiculo.Diretoria; 
             document.getElementById('detalhe-renavam').textContent = veiculo.Renavam;
+            document.getElementById('detalhe-cartao').textContent = veiculo.Cartão;
             document.getElementById('detalhe-revisao').textContent = statusTexto;
             document.getElementById('frota-detalhes').classList.add('visivel');
          });

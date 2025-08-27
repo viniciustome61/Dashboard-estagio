@@ -104,10 +104,70 @@
                         <li><strong>Diretoria:</strong> <span id="detalhe-diretoria"></span></li>
                         <li><strong>Renavam:</strong> <span id="detalhe-renavam"></span></li>
                         <li><strong>Revisão:</strong> <span id="detalhe-revisao"></span></li>
+                        <li><strong>Cartão:</strong> <span id="detalhe-cartao"></span></li> 
                     </ul>
                 </div>
             </div>
         </section>
+        <section id="dashboard-desempenho-frota" class="dashboard-tela">
+    <h2 class="titulo-tela"><i class="fa-solid fa-chart-line"></i> Análise de Desempenho da Frota</h2>
+    <div class="conteudo-tela">
+        
+        <div class="filtros-container">
+            <div class="filtro-item">
+                <label for="filtro-mes-desempenho">Mês:</label>
+                <select id="filtro-mes-desempenho"></select>
+            </div>
+            <div class="filtro-item">
+                <label for="filtro-diretoria-desempenho">Diretoria:</label>
+                <select id="filtro-diretoria-desempenho"></select>
+            </div>
+            <div class="filtro-item">
+                <label for="filtro-veiculo-desempenho">Veículo:</label>
+                <select id="filtro-veiculo-desempenho"></select>
+            </div>
+            <div class="filtro-item">
+                <label for="filtro-motorista-desempenho">Motorista:</label>
+                <select id="filtro-motorista-desempenho"></select>
+            </div>
+            <button id="botao-filtrar-desempenho">Analisar</button>
+        </div>
+
+        <div class="cards-resumo" id="cards-resumo-desempenho">
+            <div class="card">
+                <h3>Custo Total</h3>
+                <p id="desempenho-custo-total">R$ 0,00</p>
+            </div>
+            <div class="card">
+                <h3>Litros Abastecidos</h3>
+                <p id="desempenho-total-litros">0,00</p>
+            </div>
+            <div class="card">
+                <h3>Distância Percorrida</h3>
+                <p id="desempenho-total-km">0 km</p>
+            </div>
+            <div class="card">
+                <h3>Custo Médio / Km</h3>
+                <p id="desempenho-custo-km">R$ 0,00</p>
+            </div>
+        </div>
+
+        <div class="graficos-container">
+            <div class="grafico-wrapper">
+                <h4>Gasto por Diretoria</h4>
+                <div class="grafico-canvas-container">
+                    <canvas id="grafico-gasto-diretoria"></canvas>
+                </div>
+            </div>
+            <div class="grafico-wrapper">
+                <h4>Top 5 Veículos por Custo</h4>
+                <div class="grafico-canvas-container">
+                    <canvas id="grafico-top-veiculos"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
