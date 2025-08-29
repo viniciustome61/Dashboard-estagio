@@ -172,6 +172,7 @@ body {
     position: relative;
     border: 3px solid transparent;
 }
+
 .veiculo-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
@@ -217,23 +218,35 @@ body {
 }
 .veiculo-card img {
     width: 100%;
-    height: 260px;
+    height: 70%; /* Aumente esta porcentagem para dar mais espaço à imagem */
     object-fit: cover;
-    display:block
+    display: block;
+    flex-grow: 1; /* Permite que a imagem "cresça" para ocupar o espaço disponível */
 }
-.veiculo-info {
-    padding: 15px;
+.veiculo-card .veiculo-info {
+    background-color: #34495e; /* Um tom ligeiramente mais escuro para contraste */
+    padding: 8px 10px; /* Preenchimento interno */
     text-align: center;
+    flex-shrink: 0; /* Impede que ele encolha */
+    height: 85px; /* Altura fixa para o bloco de informações */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centraliza o texto verticalmente */
 }
-.veiculo-info h5 {
-    font-size: 1.2rem;
-    color: #ffffff;
-    margin: 0 0 5px 0;
-}
-.veiculo-info p {
-    font-size: 1rem;
-    color: #bdc3c7;
+
+.veiculo-card .veiculo-info h5 {
     margin: 0;
+    font-size: 1.5em; /* Tamanho da fonte do modelo */
+    color: #ecf0f1;
+    white-space: nowrap; /* Evita quebra de linha */
+    overflow: hidden; /* Esconde o que exceder */
+    text-overflow: ellipsis; /* Adiciona "..." se o texto for muito longo */
+}
+
+.veiculo-card .veiculo-info p {
+    margin: 0;
+    font-size: 1.0em; /* Tamanho da fonte da placa */
+    color: #bdc3c7;
 }
 .frota-detalhes {
     position: fixed;

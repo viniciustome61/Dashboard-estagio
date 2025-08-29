@@ -64,37 +64,16 @@
         </section>
 
         <section id="dashboard-orcamento" class="dashboard-tela">
-            <h2 class="titulo-tela"><i class="fa-solid fa-chart-pie"></i> Orçamento Anual por Diretoria</h2>
+            <h2 class="titulo-tela"><i class="fa-solid fa-chart-pie"></i> Controle de Contratos</h2>
             <div class="conteudo-tela">
-                <p>Painel de Orçamento por Diretoria em construção.</p>
+                <p>Painel de Controle de Contratos em construção.</p>
             </div>
         </section>
 
         <section id="dashboard-frota" class="dashboard-tela">
             <h2 class="titulo-tela"><i class="fa-solid fa-car"></i> Controle de Frota</h2>
             <div class="conteudo-tela">
-                
-                <div class="cards-resumo" id="cards-resumo-frota">
-                    <div class="card">
-                        <h5>Total Abastecido (L)</h5>
-                        <p id="frota-total-litros">0</p>
-                    </div>
-                    <div class="card">
-                        <h5>Custo Total Viagens</h5>
-                        <p id="frota-custo-total">R$ 0,00</p>
-                    </div>
-                    <div class="card">
-                        <h5>Custo Médio / Litro</h5>
-                        <p id="frota-custo-litro">R$ 0,00</p>
-                    </div>
-                    <div class="card">
-                        <h5>Distância Total (Km)</h5>
-                        <p id="frota-total-km">0</p>
-                    </div>
-                </div>
-
                 <div class="frota-grid" id="frota-grid"></div>
-
                 <div class="frota-detalhes" id="frota-detalhes">
                     <button id="fechar-detalhes-frota">X</button>
                     <h3 id="detalhe-modelo">Modelo do Veículo</h3>
@@ -109,65 +88,70 @@
                 </div>
             </div>
         </section>
-        <section id="dashboard-desempenho-frota" class="dashboard-tela">
-    <h2 class="titulo-tela"><i class="fa-solid fa-chart-line"></i> Análise de Desempenho da Frota</h2>
-    <div class="conteudo-tela">
         
-        <div class="filtros-container">
-            <div class="filtro-item">
-                <label for="filtro-mes-desempenho">Mês:</label>
-                <select id="filtro-mes-desempenho"></select>
-            </div>
-            <div class="filtro-item">
-                <label for="filtro-diretoria-desempenho">Diretoria:</label>
-                <select id="filtro-diretoria-desempenho"></select>
-            </div>
-            <div class="filtro-item">
-                <label for="filtro-veiculo-desempenho">Veículo:</label>
-                <select id="filtro-veiculo-desempenho"></select>
-            </div>
-            <div class="filtro-item">
-                <label for="filtro-motorista-desempenho">Motorista:</label>
-                <select id="filtro-motorista-desempenho"></select>
-            </div>
-            <button id="botao-filtrar-desempenho">Analisar</button>
-        </div>
+        <section id="dashboard-desempenho-frota" class="dashboard-tela">
+            <h2 class="titulo-tela"><i class="fa-solid fa-chart-line"></i> Análise de Desempenho da Frota</h2>
+            <div class="conteudo-tela">
+                
+                <div class="filtros-container">
+                    <div class="filtro-item">
+                        <label for="filtro-mes-desempenho">Mês:</label>
+                        <select id="filtro-mes-desempenho"></select>
+                    </div>
+                    <div class="filtro-item">
+                        <label for="filtro-diretoria-desempenho">Diretoria:</label>
+                        <select id="filtro-diretoria-desempenho"></select>
+                    </div>
+                    <div class="filtro-item">
+                        <label for="filtro-veiculo-desempenho">Veículo:</label>
+                        <select id="filtro-veiculo-desempenho"></select>
+                    </div>
+                    <div class="filtro-item">
+                        <label for="filtro-motorista-desempenho">Motorista:</label>
+                        <select id="filtro-motorista-desempenho"></select>
+                    </div>
+                    <div class="filtro-item">
+                        <label for="filtro-combustivel-desempenho">Combustível:</label>
+                        <select id="filtro-combustivel-desempenho"></select>
+                    </div>
+                    <button id="botao-filtrar-desempenho">Analisar</button>
+                </div>
 
-        <div class="cards-resumo" id="cards-resumo-desempenho">
-            <div class="card">
-                <h3>Custo Total</h3>
-                <p id="desempenho-custo-total">R$ 0,00</p>
-            </div>
-            <div class="card">
-                <h3>Litros Abastecidos</h3>
-                <p id="desempenho-total-litros">0,00</p>
-            </div>
-            <div class="card">
-                <h3>Distância Percorrida</h3>
-                <p id="desempenho-total-km">0 km</p>
-            </div>
-            <div class="card">
-                <h3>Custo Médio / Km</h3>
-                <p id="desempenho-custo-km">R$ 0,00</p>
-            </div>
-        </div>
+                <div class="cards-resumo" id="cards-resumo-desempenho">
+                    <div class="card">
+                        <h3>Custo Total</h3>
+                        <p id="desempenho-custo-total">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Distância Total</h3>
+                        <p id="desempenho-total-km">0 km</p>
+                    </div>
+                    <div class="card">
+                        <h3>Custo Médio / Km</h3>
+                        <p id="desempenho-custo-km">R$ 0,00</p>
+                    </div>
+                    <div class="card">
+                        <h3>Eficiência Média</h3>
+                        <p id="desempenho-eficiencia-media">0,0 Km/L</p>
+                    </div>
+                </div>
 
-        <div class="graficos-container">
-            <div class="grafico-wrapper">
-                <h4>Gasto por Diretoria</h4>
-                <div class="grafico-canvas-container">
-                    <canvas id="grafico-gasto-diretoria"></canvas>
+                <div class="graficos-container">
+                    <div class="grafico-wrapper">
+                        <h4>Gasto por Diretoria</h4>
+                        <div class="grafico-canvas-container">
+                            <canvas id="grafico-gasto-diretoria"></canvas>
+                        </div>
+                    </div>
+                    <div class="grafico-wrapper">
+                        <h4>Custo por KM por Veículo</h4>
+                        <div class="grafico-canvas-container">
+                            <canvas id="grafico-custo-km-veiculo"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="grafico-wrapper">
-                <h4>Top 5 Veículos por Custo</h4>
-                <div class="grafico-canvas-container">
-                    <canvas id="grafico-top-veiculos"></canvas>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
+        </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
