@@ -233,67 +233,113 @@ function configurarEventListenerDesempenho() {
     }
 }
 
+// 'atualizarPainelDesempenho'
+
 function atualizarPainelDesempenho() {
+    // 1. LER OS FILTROS
     const mesSelecionado = document.getElementById('filtro-mes-desempenho').value;
     const diretoriaSelecionada = document.getElementById('filtro-diretoria-desempenho').value;
     const veiculoSelecionado = document.getElementById('filtro-veiculo-desempenho').value;
     const motoristaSelecionado = document.getElementById('filtro-motorista-desempenho').value;
     const combustivelSelecionado = document.getElementById('filtro-combustivel-desempenho').value;
 
+    // 2. FILTRAR OS DADOS
     let dadosFiltrados = todosOsDadosDesempenho.filter(item => {
         if (!item['Data/Hora']) return false;
-        
         const mesDoItem = MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()];
-
         const correspondeMes = (mesSelecionado === 'Todos') || (mesDoItem === mesSelecionado);
         const correspondeDiretoria = (diretoriaSelecionada === 'Todos') || (item.Diretoria === diretoriaSelecionada);
         const correspondeVeiculo = (veiculoSelecionado === 'Todos') || (item['Veículo'] === veiculoSelecionado);
         const correspondeMotorista = (motoristaSelecionado === 'Todos') || (item.Motorista === motoristaSelecionado);
         const correspondeCombustivel = (combustivelSelecionado === 'Todos') || (item['Tipo Combustível'] === combustivelSelecionado);
-
         return correspondeMes && correspondeDiretoria && correspondeVeiculo && correspondeMotorista && correspondeCombustivel;
     });
 
+    // 3. ATUALIZAR CARDS DE KPI GERAIS
     const custoTotal = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Custo total de combustível']), 0);
     const totalKm = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Quilometragem']), 0);
     const totalLitros = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Total de litros']), 0);
-    
-    const custoMedioKm = totalKm > 0 ? custoTotal / totalKm : 0;
+    const custoMedioLitro = totalLitros > 0 ? custoTotal / totalLitros : 0;
     const eficienciaMedia = totalLitros > 0 ? totalKm / totalLitros : 0;
 
     document.getElementById('desempenho-custo-total').textContent = formatarMoeda(custoTotal);
     document.getElementById('desempenho-total-km').textContent = `${totalKm.toFixed(0)} km`;
-    document.getElementById('desempenho-custo-km').textContent = formatarMoeda(custoMedioKm);
+    document.getElementById('desempenho-custo-litro').textContent = formatarMoeda(custoMedioLitro);
     document.getElementById('desempenho-eficiencia-media').textContent = `${eficienciaMedia.toFixed(1)} Km/L`;
 
-    const gastoPorDiretoria = dadosFiltrados.reduce((acc, item) => {
-        if (item.Diretoria) {
-            if (!acc[item.Diretoria]) acc[item.Diretoria] = 0;
-            acc[item.Diretoria] += parseNumerico(item['Custo total de combustível']);
-        }
-        return acc;
-    }, {});
+    // 4. LÓGICA DINÂMICA PARA OS GRÁFICOS
+    const tituloEsquerda = document.getElementById('titulo-desempenho-esquerda');
+    const tituloDireita = document.getElementById('titulo-desempenho-direita');
+    const containerDireita = document.getElementById('container-desempenho-direita');
 
-    const dadosVeiculosAgregados = dadosFiltrados.reduce((acc, item) => {
-        if (item['Veículo']) {
-            if (!acc[item['Veículo']]) {
-                acc[item['Veículo']] = { custoTotal: 0, kmTotal: 0 };
+    // --- LÓGICA PARA VISÃO GERAL OU FILTRO DE DIRETORIA ---
+    if (veiculoSelecionado === 'Todos') {
+        tituloEsquerda.textContent = diretoriaSelecionada === 'Todos' ? 'Gasto por Diretoria' : `Gasto por Veículo - ${diretoriaSelecionada}`;
+        tituloDireita.textContent = diretoriaSelecionada === 'Todos' ? 'Custo por Litro por Veículo' : `Custo por Litro - ${diretoriaSelecionada}`;
+        containerDireita.innerHTML = '<canvas id="grafico-desempenho-direita"></canvas>';
+
+        // Gráfico da Esquerda: Gasto por Diretoria (Geral) ou Gasto por Veículo (na Diretoria)
+        if (diretoriaSelecionada === 'Todos') {
+            const gastoPorDiretoria = dadosFiltrados.reduce((acc, item) => {
+                if (item.Diretoria) {
+                    if (!acc[item.Diretoria]) acc[item.Diretoria] = 0;
+                    acc[item.Diretoria] += parseNumerico(item['Custo total de combustível']);
+                }
+                return acc;
+            }, {});
+            renderizarGrafico('grafico-desempenho-esquerda', 'pie', Object.keys(gastoPorDiretoria), Object.values(gastoPorDiretoria), 'Gasto por Diretoria');
+        } else {
+            const gastoPorVeiculo = dadosFiltrados.reduce((acc, item) => {
+                if (item['Veículo']) {
+                    if (!acc[item['Veículo']]) acc[item['Veículo']] = 0;
+                    acc[item['Veículo']] += parseNumerico(item['Custo total de combustível']);
+                }
+                return acc;
+            }, {});
+            renderizarGrafico('grafico-desempenho-esquerda', 'bar', Object.keys(gastoPorVeiculo), Object.values(gastoPorVeiculo), 'Gasto por Veículo');
+        }
+        
+        // --- MUDANÇA AQUI: Gráfico da Direita agora é Custo por LITRO ---
+        const dadosAgregados = dadosFiltrados.reduce((acc, item) => {
+            if (item['Veículo']) {
+                if (!acc[item['Veículo']]) acc[item['Veículo']] = { custoTotal: 0, litrosTotal: 0 };
+                acc[item['Veículo']].custoTotal += parseNumerico(item['Custo total de combustível']);
+                acc[item['Veículo']].litrosTotal += parseNumerico(item['Total de litros']); // Agrega litros
             }
-            acc[item['Veículo']].custoTotal += parseNumerico(item['Custo total de combustível']);
-            acc[item['Veículo']].kmTotal += parseNumerico(item['Quilometragem']);
-        }
-        return acc;
-    }, {});
-
-    const custoKmPorVeiculo = Object.entries(dadosVeiculosAgregados).map(([veiculo, dados]) => {
-        const custoKm = dados.kmTotal > 0 ? dados.custoTotal / dados.kmTotal : 0;
-        return { veiculo, custoKm };
-    }).sort((a, b) => b.custoKm - a.custoKm);
+            return acc;
+        }, {});
+        const custoLitroPorVeiculo = Object.entries(dadosAgregados).map(([veiculo, dados]) => ({
+            veiculo,
+            custoLitro: dados.litrosTotal > 0 ? dados.custoTotal / dados.litrosTotal : 0 // Calcula custo por litro
+        })).sort((a, b) => b.custoLitro - a.custoLitro);
+        renderizarGrafico('grafico-desempenho-direita', 'bar', custoLitroPorVeiculo.map(d => d.veiculo), custoLitroPorVeiculo.map(d => d.custoLitro), 'Custo por Litro');
     
-    renderizarGrafico('grafico-gasto-diretoria', 'pie', Object.keys(gastoPorDiretoria), Object.values(gastoPorDiretoria), 'Gasto por Diretoria');
-    renderizarGrafico('grafico-custo-km-veiculo', 'bar', custoKmPorVeiculo.map(item => item.veiculo), custoKmPorVeiculo.map(item => item.custoKm), 'Custo por KM');
-}
+    // --- LÓGICA PARA VISÃO DE VEÍCULO ESPECÍFICO ---
+    } else {
+        tituloEsquerda.textContent = `Evolução Mensal de Custos - ${veiculoSelecionado}`;
+        tituloDireita.textContent = `Indicadores Chave - ${veiculoSelecionado}`;
+        
+        const gastosMensais = Array(12).fill(0);
+        dadosFiltrados.forEach(item => {
+            const indiceMes = MESES_ORDENADOS.indexOf(MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()]);
+            if (indiceMes !== -1) {
+                gastosMensais[indiceMes] += parseNumerico(item['Custo total de combustível']);
+            }
+        });
+        renderizarGrafico('grafico-desempenho-esquerda', 'line', MESES_ORDENADOS, gastosMensais, 'Custo Mensal');
 
+        const numeroAbastecimentos = dadosFiltrados.length;
+        const custoMedioAbastecimento = numeroAbastecimentos > 0 ? custoTotal / numeroAbastecimentos : 0;
+        const litrosMedioAbastecimento = numeroAbastecimentos > 0 ? totalLitros / numeroAbastecimentos : 0;
+        
+        containerDireita.innerHTML = `
+            <div class="kpi-container-vertical">
+                <div class="kpi-card"><h5>Eficiência Média (Km/L)</h5><p>${eficienciaMedia.toFixed(1)}</p></div>
+                <div class="kpi-card"><h5>Custo Médio / Abastecimento</h5><p>${formatarMoeda(custoMedioAbastecimento)}</p></div>
+                <div class="kpi-card"><h5>Litros / Abastecimento</h5><p>${litrosMedioAbastecimento.toFixed(1)}</p></div>
+            </div>`;
+    }
+}
 
 // --- Funções da Tela de Custos Fixos ---
 

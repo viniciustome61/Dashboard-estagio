@@ -128,7 +128,7 @@
                     </div>
                     <div class="card">
                         <h3>Custo Médio / Km</h3>
-                        <p id="desempenho-custo-km">R$ 0,00</p>
+                        <p id="desempenho-custo-litro">R$ 0,00</p>
                     </div>
                     <div class="card">
                         <h3>Eficiência Média</h3>
@@ -137,19 +137,19 @@
                 </div>
 
                 <div class="graficos-container">
-                    <div class="grafico-wrapper">
-                        <h4>Gasto por Diretoria</h4>
-                        <div class="grafico-canvas-container">
-                            <canvas id="grafico-gasto-diretoria"></canvas>
-                        </div>
-                    </div>
-                    <div class="grafico-wrapper">
-                        <h4>Custo por KM por Veículo</h4>
-                        <div class="grafico-canvas-container">
-                            <canvas id="grafico-custo-km-veiculo"></canvas>
-                        </div>
-                    </div>
+            <div class="grafico-wrapper">
+                <h4 id="titulo-desempenho-esquerda">Gasto por Diretoria</h4>
+                <div class="grafico-canvas-container">
+                    <canvas id="grafico-desempenho-esquerda"></canvas>
                 </div>
+            </div>
+            <div class="grafico-wrapper">
+                <h4 id="titulo-desempenho-direita">Custo por Litro por Veículo</h4>
+                <div class="grafico-canvas-container" id="container-desempenho-direita">
+                    <canvas id="grafico-desempenho-direita"></canvas>
+                </div>
+            </div>
+        </div>
             </div>
         </section>
     </main>
