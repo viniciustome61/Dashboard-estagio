@@ -35,10 +35,12 @@ body {
     opacity: 0;
     transition: opacity 0.6s ease-in-out;
     pointer-events: none;
+    z-index: 1; /* Z-index para garantir que a tela esteja atrás de outras sobreposições */
 }
 .dashboard-tela.ativo {
     opacity: 1;
     pointer-events: auto;
+    z-index: 100;
 }
 .conteudo-tela {
     display: flex;
