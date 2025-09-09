@@ -229,14 +229,15 @@ function configurarEventListenerDesempenho() {
 }
 
 function atualizarPainelDesempenho() {
-    // 1. LER OS FILTROS
+    // --- 1. LER OS FILTROS ---
     const mesSelecionado = document.getElementById('filtro-mes-desempenho').value;
     const diretoriaSelecionada = document.getElementById('filtro-diretoria-desempenho').value;
     const veiculoSelecionado = document.getElementById('filtro-veiculo-desempenho').value;
     const motoristaSelecionado = document.getElementById('filtro-motorista-desempenho').value;
     const combustivelSelecionado = document.getElementById('filtro-combustivel-desempenho').value;
 
-    // 2. FILTRAR OS DADOS
+    // --- 2. FILTRAR OS DADOS ---
+    // Este filtro geral é usado para os KPIs e para as visões de Diretoria/Geral
     let dadosFiltrados = todosOsDadosDesempenho.filter(item => {
         if (!item['Data/Hora']) return false;
         const mesDoItem = MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()];
@@ -248,7 +249,7 @@ function atualizarPainelDesempenho() {
         return correspondeMes && correspondeDiretoria && correspondeVeiculo && correspondeMotorista && correspondeCombustivel;
     });
 
-    // 3. ATUALIZAR CARDS DE KPI GERAIS
+    // --- 3. ATUALIZAR CARDS DE KPI GERAIS ---
     const custoTotal = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Custo total de combustível']), 0);
     const totalKm = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Quilometragem']), 0);
     const totalLitros = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Total de litros']), 0);
@@ -260,17 +261,21 @@ function atualizarPainelDesempenho() {
     document.getElementById('desempenho-custo-litro').textContent = formatarMoeda(custoMedioLitro);
     document.getElementById('desempenho-eficiencia-media').textContent = `${eficienciaMedia.toFixed(1)} Km/L`;
 
-    // 4. LÓGICA DINÂMICA PARA OS GRÁFICOS
+    // --- 4. LÓGICA DINÂMICA PARA OS GRÁFICOS ---
     const tituloEsquerda = document.getElementById('titulo-desempenho-esquerda');
     const tituloDireita = document.getElementById('titulo-desempenho-direita');
     const containerDireita = document.getElementById('container-desempenho-direita');
 
-    // --- LÓGICA PARA VISÃO DE VEÍCULO ESPECÍFICO ---
+    // --- CASO 3: UM VEÍCULO ESPECÍFICO FOI SELECIONADO ---
     if (veiculoSelecionado !== 'Todos') {
         tituloEsquerda.textContent = `Evolução Mensal de Custos - ${veiculoSelecionado}`;
         tituloDireita.textContent = `Indicadores Chave - ${veiculoSelecionado}`;
         
+        // --- NOVA LÓGICA AQUI ---
+        // 1. Pega TODOS os dados do veículo selecionado no ano, ignorando o filtro de mês por enquanto.
         const dadosDoVeiculoNoAno = todosOsDadosDesempenho.filter(item => item['Veículo'] === veiculoSelecionado);
+
+        // 2. Monta o array de gastos mensais com base nos dados do ano todo.
         const gastosMensais = Array(12).fill(0);
         dadosDoVeiculoNoAno.forEach(item => {
             if(item['Data/Hora']) {
@@ -281,15 +286,19 @@ function atualizarPainelDesempenho() {
             }
         });
 
+        // 3. Cria o array de cores para o destaque, usando o filtro de mês original.
         const pointColors = Array(12).fill('#3498db');
         if (mesSelecionado !== 'Todos') {
             const indiceMesSelecionado = MESES_ORDENADOS.indexOf(mesSelecionado);
             if (indiceMesSelecionado !== -1) {
-                pointColors[indiceMesSelecionado] = '#e74c3c';
+                pointColors[indiceMesSelecionado] = '#e74c3c'; // Cor de destaque
             }
         }
+
+        // 4. Renderiza o gráfico de linha com os dados do ano todo e o destaque.
         renderizarGrafico('grafico-desempenho-esquerda', 'line', MESES_ORDENADOS, gastosMensais, 'Custo Mensal', pointColors);
 
+        // Os KPIs da direita continuam usando 'dadosFiltrados', que já respeita o mês selecionado.
         const numeroAbastecimentos = dadosFiltrados.length;
         const custoMedioAbastecimento = numeroAbastecimentos > 0 ? custoTotal / numeroAbastecimentos : 0;
         const litrosMedioAbastecimento = numeroAbastecimentos > 0 ? totalLitros / numeroAbastecimentos : 0;
@@ -301,88 +310,63 @@ function atualizarPainelDesempenho() {
                 <div class="kpi-card"><h5>Litros / Abastecimento</h5><p>${litrosMedioAbastecimento.toFixed(1)}</p></div>
             </div>`;
     
-    // --- LÓGICA PARA VISÃO GERAL OU FILTRO DE DIRETORIA ---
+    // --- CASO 2: UMA DIRETORIA ESPECÍFICA FOI SELECIONADA ---
+    } else if (diretoriaSelecionada !== 'Todos') {
+        tituloEsquerda.textContent = `Gasto por Veículo - ${diretoriaSelecionada}`;
+        tituloDireita.textContent = `Custo por Litro - ${diretoriaSelecionada}`;
+        containerDireita.innerHTML = '<canvas id="grafico-desempenho-direita"></canvas>';
+
+        const gastoPorVeiculo = dadosFiltrados.reduce((acc, item) => {
+            if (item['Veículo']) {
+                if (!acc[item['Veículo']]) acc[item['Veículo']] = 0;
+                acc[item['Veículo']] += parseNumerico(item['Custo total de combustível']);
+            }
+            return acc;
+        }, {});
+        renderizarGrafico('grafico-desempenho-esquerda', 'bar', Object.keys(gastoPorVeiculo), Object.values(gastoPorVeiculo), 'Gasto por Veículo');
+
+        const dadosAgregados = dadosFiltrados.reduce((acc, item) => {
+            if (item['Veículo']) {
+                if (!acc[item['Veículo']]) acc[item['Veículo']] = { custoTotal: 0, litrosTotal: 0 };
+                acc[item['Veículo']].custoTotal += parseNumerico(item['Custo total de combustível']);
+                acc[item['Veículo']].litrosTotal += parseNumerico(item['Total de litros']);
+            }
+            return acc;
+        }, {});
+        const custoLitroPorVeiculo = Object.entries(dadosAgregados).map(([veiculo, dados]) => ({
+            veiculo,
+            custoLitro: dados.litrosTotal > 0 ? dados.custoTotal / dados.litrosTotal : 0
+        })).sort((a, b) => b.custoLitro - a.custoLitro);
+        renderizarGrafico('grafico-desempenho-direita', 'bar', custoLitroPorVeiculo.map(d => d.veiculo), custoLitroPorVeiculo.map(d => d.custoLitro), 'Custo por Litro');
+
+    // --- CASO 1: VISÃO GERAL ---
     } else {
-        const veiculosNaSelecao = [...new Set(dadosFiltrados.map(item => item['Veículo']))];
+        tituloEsquerda.textContent = 'Gasto por Diretoria';
+        tituloDireita.textContent = 'Custo por Litro por Veículo';
+        containerDireita.innerHTML = '<canvas id="grafico-desempenho-direita"></canvas>';
 
-        // --- NOVA LÓGICA INTELIGENTE ---
-        // Se UMA diretoria estiver selecionada E ela tiver APENAS UM veículo...
-        if (diretoriaSelecionada !== 'Todos' && veiculosNaSelecao.length === 1) {
-            const nomeVeiculoUnico = veiculosNaSelecao[0];
-            tituloEsquerda.textContent = `Evolução Mensal de Custos - ${nomeVeiculoUnico}`;
-            tituloDireita.textContent = `Indicadores Chave - ${nomeVeiculoUnico}`;
-            
-            const dadosDoVeiculoNoAno = todosOsDadosDesempenho.filter(item => item['Veículo'] === nomeVeiculoUnico);
-            const gastosMensais = Array(12).fill(0);
-            dadosDoVeiculoNoAno.forEach(item => {
-                if(item['Data/Hora']) {
-                    const indiceMes = MESES_ORDENADOS.indexOf(MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()]);
-                    if (indiceMes !== -1) {
-                        gastosMensais[indiceMes] += parseNumerico(item['Custo total de combustível']);
-                    }
-                }
-            });
-
-            const pointColors = Array(12).fill('#3498db');
-            if (mesSelecionado !== 'Todos') {
-                const indiceMesSelecionado = MESES_ORDENADOS.indexOf(mesSelecionado);
-                if (indiceMesSelecionado !== -1) {
-                    pointColors[indiceMesSelecionado] = '#e74c3c';
-                }
+        const gastoPorDiretoria = dadosFiltrados.reduce((acc, item) => {
+            if (item.Diretoria) {
+                if (!acc[item.Diretoria]) acc[item.Diretoria] = 0;
+                acc[item.Diretoria] += parseNumerico(item['Custo total de combustível']);
             }
-            renderizarGrafico('grafico-desempenho-esquerda', 'line', MESES_ORDENADOS, gastosMensais, 'Custo Mensal', pointColors);
-
-            const numeroAbastecimentos = dadosFiltrados.length;
-            const custoMedioAbastecimento = numeroAbastecimentos > 0 ? custoTotal / numeroAbastecimentos : 0;
-            const litrosMedioAbastecimento = numeroAbastecimentos > 0 ? totalLitros / numeroAbastecimentos : 0;
-            
-            containerDireita.innerHTML = `
-                <div class="kpi-container-vertical">
-                    <div class="kpi-card"><h5>Eficiência Média (Km/L)</h5><p>${eficienciaMedia.toFixed(1)}</p></div>
-                    <div class="kpi-card"><h5>Custo Médio / Abastecimento</h5><p>${formatarMoeda(custoMedioAbastecimento)}</p></div>
-                    <div class="kpi-card"><h5>Litros / Abastecimento</h5><p>${litrosMedioAbastecimento.toFixed(1)}</p></div>
-                </div>`;
-
-        // Caso contrário, usa a lógica de gráficos de comparação
-        } else {
-            tituloEsquerda.textContent = diretoriaSelecionada === 'Todos' ? 'Gasto por Diretoria' : `Gasto por Veículo - ${diretoriaSelecionada}`;
-            tituloDireita.textContent = `Custo por Litro - ${diretoriaSelecionada !== 'Todos' ? diretoriaSelecionada : 'Geral'}`;
-            containerDireita.innerHTML = '<canvas id="grafico-desempenho-direita"></canvas>';
-
-            if (diretoriaSelecionada === 'Todos') {
-                const gastoPorDiretoria = dadosFiltrados.reduce((acc, item) => {
-                    if (item.Diretoria) {
-                        if (!acc[item.Diretoria]) acc[item.Diretoria] = 0;
-                        acc[item.Diretoria] += parseNumerico(item['Custo total de combustível']);
-                    }
-                    return acc;
-                }, {});
-                renderizarGrafico('grafico-desempenho-esquerda', 'pie', Object.keys(gastoPorDiretoria), Object.values(gastoPorDiretoria), 'Gasto por Diretoria');
-            } else {
-                const gastoPorVeiculo = dadosFiltrados.reduce((acc, item) => {
-                    if (item['Veículo']) {
-                        if (!acc[item['Veículo']]) acc[item['Veículo']] = 0;
-                        acc[item['Veículo']] += parseNumerico(item['Custo total de combustível']);
-                    }
-                    return acc;
-                }, {});
-                renderizarGrafico('grafico-desempenho-esquerda', 'bar', Object.keys(gastoPorVeiculo), Object.values(gastoPorVeiculo), 'Gasto por Veículo');
+            return acc;
+        }, {});
+        renderizarGrafico('grafico-desempenho-esquerda', 'pie', Object.keys(gastoPorDiretoria), Object.values(gastoPorDiretoria), 'Gasto por Diretoria');
+        
+        const dadosAgregados = dadosFiltrados.reduce((acc, item) => {
+            if (item['Veículo']) {
+                if (!acc[item['Veículo']]) acc[item['Veículo']] = { custoTotal: 0, litrosTotal: 0 };
+                acc[item['Veículo']].custoTotal += parseNumerico(item['Custo total de combustível']);
+                acc[item['Veículo']].litrosTotal += parseNumerico(item['Total de litros']);
             }
-            
-            const dadosAgregados = dadosFiltrados.reduce((acc, item) => {
-                if (item['Veículo']) {
-                    if (!acc[item['Veículo']]) acc[item['Veículo']] = { custoTotal: 0, litrosTotal: 0 };
-                    acc[item['Veículo']].custoTotal += parseNumerico(item['Custo total de combustível']);
-                    acc[item['Veículo']].litrosTotal += parseNumerico(item['Total de litros']);
-                }
-                return acc;
-            }, {});
-            const custoLitroPorVeiculo = Object.entries(dadosAgregados).map(([veiculo, dados]) => ({
-                veiculo,
-                custoLitro: dados.litrosTotal > 0 ? dados.custoTotal / dados.litrosTotal : 0
-            })).sort((a, b) => b.custoLitro - a.custoLitro);
-            renderizarGrafico('grafico-desempenho-direita', 'bar', custoLitroPorVeiculo.map(d => d.veiculo), custoLitroPorVeiculo.map(d => d.custoLitro), 'Custo por Litro');
-        }
+            return acc;
+        }, {});
+        const custoLitroPorVeiculo = Object.entries(dadosAgregados).map(([veiculo, dados]) => ({
+            veiculo,
+            custoLitro: dados.litrosTotal > 0 ? dados.custoTotal / dados.litrosTotal : 0
+        })).sort((a, b) => b.custoLitro - a.custoLitro);
+        renderizarGrafico('grafico-desempenho-direita', 'bar', custoLitroPorVeiculo.map(d => d.veiculo), custoLitroPorVeiculo.map(d => d.custoLitro), 'Custo por Litro');
     }
 }
 
@@ -465,7 +449,7 @@ function atualizarDashboard(dados, filtros) {
             }
         });
         
-        
+        // --- NOVA LÓGICA PARA CRIAR O DESTAQUE ---
         // Cria um array de cores para os pontos, começando com a cor padrão
         const pointColors = Array(12).fill('#3498db');
         // Se um mês foi selecionado, encontra o índice e muda a cor
@@ -520,7 +504,7 @@ function renderizarPainelFrota(dadosVeiculos) {
     frotaGrid.innerHTML = '';
 
     dadosVeiculos.forEach(veiculo => {
-        const odometro = parseNumerico(veiculo['ODÔMETRO']);
+        const odometro = parseNumerico(veiculo['Odômetro']);
         const ultimaRevisao = parseNumerico(veiculo['ULTIMA REVISÃO (KM)']);
         const proximaRevisao = ultimaRevisao + REVISAO_INTERVALO_KM;
         const kmParaRevisao = proximaRevisao - odometro;
@@ -551,6 +535,7 @@ function renderizarPainelFrota(dadosVeiculos) {
                               <p>${veiculo.Placa}</p>
                           </div>`;
 
+        // --- LÓGICA DE CLIQUE COMPLETA E CORRIGIDA ---
         card.addEventListener('click', () => { 
             document.getElementById('detalhe-modelo').textContent = veiculo.Modelo;
             document.getElementById('detalhe-placa').textContent = veiculo.Placa;
@@ -558,9 +543,14 @@ function renderizarPainelFrota(dadosVeiculos) {
             document.getElementById('detalhe-diretoria').textContent = veiculo.Diretoria; 
             document.getElementById('detalhe-renavam').textContent = veiculo.Renavam;
             document.getElementById('detalhe-revisao').textContent = statusTexto;
+            // Lê as colunas da sua planilha de veículos
             document.getElementById('detalhe-cartao').textContent = veiculo.Cartão;
+            document.getElementById('detalhe-multas').textContent = veiculo.Multas;
+            document.getElementById('detalhe-manutencao').textContent = veiculo.Manutenção;
+            
             document.getElementById('frota-detalhes').classList.add('visivel');
          });
+         
         frotaGrid.appendChild(card);
     });
 
