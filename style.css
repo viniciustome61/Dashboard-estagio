@@ -327,3 +327,13 @@ body {
     font-weight: 600;
     color: #ffffff;
 }
+/* Estilos para os links "Ver Processo SEI" */
+.frota-detalhes a {
+    color: #ADD8E6; /* Um azul claro */
+    text-decoration: underline; /* Mantém o sublinhado para indicar que é um link */
+    font-weight: bold; /* Deixa o texto do link mais forte */
+}
+
+.frota-detalhes a:hover {
+    color: #FFF; /* Branco puro ao passar o mouse para um efeito de destaque */
+}

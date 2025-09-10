@@ -3,7 +3,7 @@
 // =======================================================
 
 const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3LwM4EZ_aE0awS6p_0R6XGKysv8CEswX1RtYkP13hM6T-spibHXYNfvZ0QRPN1mjv0-ypVDmY2/pub?output=csv';
-const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?output=csv';
+const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?gid=0&single=true&output=csv';
 const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRSn9z52SmwwstiOq194utY7usOYAKU5yryxM6A1-tAdubIFFSu6OecdHwB6EYresL0HoD02ecVlDDS/pub?gid=792570119&single=true&output=csv'; 
 let todosOsDadosDesempenho = [];
 
@@ -504,7 +504,7 @@ function renderizarPainelFrota(dadosVeiculos) {
     frotaGrid.innerHTML = '';
 
     dadosVeiculos.forEach(veiculo => {
-        const odometro = parseNumerico(veiculo['Odômetro']);
+        const odometro = parseNumerico(veiculo.Odômetro);
         const ultimaRevisao = parseNumerico(veiculo['ULTIMA REVISÃO (KM)']);
         const proximaRevisao = ultimaRevisao + REVISAO_INTERVALO_KM;
         const kmParaRevisao = proximaRevisao - odometro;
@@ -525,7 +525,7 @@ function renderizarPainelFrota(dadosVeiculos) {
         
         const card = document.createElement('div');
         card.className = `veiculo-card ${statusClasse}`;
-        const nomeImagem = veiculo['ImagemURL'] || veiculo['Nome da Imagem'];
+        const nomeImagem = veiculo.ImagemURL;
         card.innerHTML = `<div class="status-revisao ${statusMarcador}" title="${statusTexto}"></div>
                           <img src="${CAMINHO_IMAGENS}${nomeImagem}" 
                                onerror="this.onerror=null; this.src='${CAMINHO_IMAGENS}placeholder.png';" 
@@ -535,7 +535,7 @@ function renderizarPainelFrota(dadosVeiculos) {
                               <p>${veiculo.Placa}</p>
                           </div>`;
 
-        // --- LÓGICA DE CLIQUE COMPLETA E CORRIGIDA ---
+        // --- LÓGICA DE CLIQUE ATUALIZADA PARA LER AS COLUNAS _URL E CRIAR LINKS ---
         card.addEventListener('click', () => { 
             document.getElementById('detalhe-modelo').textContent = veiculo.Modelo;
             document.getElementById('detalhe-placa').textContent = veiculo.Placa;
@@ -543,10 +543,32 @@ function renderizarPainelFrota(dadosVeiculos) {
             document.getElementById('detalhe-diretoria').textContent = veiculo.Diretoria; 
             document.getElementById('detalhe-renavam').textContent = veiculo.Renavam;
             document.getElementById('detalhe-revisao').textContent = statusTexto;
-            // Lê as colunas da sua planilha de veículos
             document.getElementById('detalhe-cartao').textContent = veiculo.Cartão;
-            document.getElementById('detalhe-multas').textContent = veiculo.Multas;
-            document.getElementById('detalhe-manutencao').textContent = veiculo.Manutenção;
+
+            const multasSpan = document.getElementById('detalhe-multas');
+            const manutencaoSpan = document.getElementById('detalhe-manutencao');
+            const itemMultas = document.getElementById('item-multas');
+            const itemManutencao = document.getElementById('item-manutencao');
+
+            // Lê as URLs das colunas 
+            const multasUrl = veiculo.Multas_URL;
+            const manutencaoUrl = veiculo.Manutenção_URL; 
+
+            // Lógica para Multas
+            if (multasUrl && multasUrl.trim() !== '') {
+                itemMultas.style.display = 'block';
+                multasSpan.innerHTML = `<a href="${multasUrl}" target="_blank">Ver Processo SEI</a>`;
+            } else {
+                itemMultas.style.display = 'none';
+            }
+
+            // Lógica para Manutenção
+            if (manutencaoUrl && manutencaoUrl.trim() !== '') {
+                itemManutencao.style.display = 'block';
+                manutencaoSpan.innerHTML = `<a href="${manutencaoUrl}" target="_blank">Ver Processo SEI</a>`;
+            } else {
+                itemManutencao.style.display = 'none';
+            }
             
             document.getElementById('frota-detalhes').classList.add('visivel');
          });
@@ -558,7 +580,6 @@ function renderizarPainelFrota(dadosVeiculos) {
         document.getElementById('frota-detalhes').classList.remove('visivel');
      });
 }
-
 
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
