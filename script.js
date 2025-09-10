@@ -607,7 +607,7 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
         fill: tipo === 'line'
     };
 
-    // --- NOVA LÓGICA DE DESTAQUE ---
+    // --- NOVA LÓGICA DE DESTAQUE DOS PONTOS ---
     // Se um array de cores para os pontos for fornecido, aplica ao gráfico
     if (tipo === 'line' && pointColors) {
         dataset.pointBackgroundColor = pointColors;

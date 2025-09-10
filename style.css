@@ -329,7 +329,7 @@ body {
 }
 /* Estilos para os links "Ver Processo SEI" */
 .frota-detalhes a {
-    color: #ADD8E6; /* Um azul claro */
+    color: #ADD8E6; /* azul claro */
     text-decoration: underline; /* Mantém o sublinhado para indicar que é um link */
     font-weight: bold; /* Deixa o texto do link mais forte */
 }
