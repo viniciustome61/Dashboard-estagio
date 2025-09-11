@@ -269,7 +269,7 @@ function atualizarPainelDesempenho() {
     // --- CASO 3: UM VEÍCULO ESPECÍFICO FOI SELECIONADO ---
     if (veiculoSelecionado !== 'Todos') {
         tituloEsquerda.textContent = `Evolução Mensal de Custos - ${veiculoSelecionado}`;
-        tituloDireita.textContent = `Indicadores Chave - ${veiculoSelecionado}`;
+        tituloDireita.textContent = `Médias Gerais - ${veiculoSelecionado}`;
         
         // --- NOVA LÓGICA AQUI ---
         // 1. Pega TODOS os dados do veículo selecionado no ano, ignorando o filtro de mês por enquanto.
@@ -438,7 +438,7 @@ function atualizarDashboard(dados, filtros) {
 
     if (filtros.empresa !== 'Todos') {
         tituloGraficoEsquerda.textContent = `Evolução Mensal - ${filtros.empresa}`;
-        tituloPainelDireita.textContent = `Indicadores Chave - ${filtros.empresa}`;
+        tituloPainelDireita.textContent = `Médias Gerais - ${filtros.empresa}`;
         
         const dadosDaEmpresaNoAno = dadosAnoInteiro.filter(d => d.Empresa.trim() === filtros.empresa);
         const gastosMensais = Array(12).fill(0);
