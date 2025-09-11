@@ -4,7 +4,9 @@
 
 const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3LwM4EZ_aE0awS6p_0R6XGKysv8CEswX1RtYkP13hM6T-spibHXYNfvZ0QRPN1mjv0-ypVDmY2/pub?output=csv';
 const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?gid=0&single=true&output=csv';
-const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRSn9z52SmwwstiOq194utY7usOYAKU5yryxM6A1-tAdubIFFSu6OecdHwB6EYresL0HoD02ecVlDDS/pub?gid=792570119&single=true&output=csv'; 
+const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRSn9z52SmwwstiOq194utY7usOYAKU5yryxM6A1-tAdubIFFSu6OecdHwB6EYresL0HoD02ecVlDDS/pub?gid=792570119&single=true&output=csv';
+const URL_CONTRATOS =  'https://docs.google.com/spreadsheets/d/e/2PACX-1vRC7aX6MS72UNwVkPhLx1obkazO1aq3ilFDa5YH-dZ-uvr5ARo-JeekMlPQApO9fw/pub?gid=783199034&single=true&output=csv'
+let todosOsDadosContratos = [];
 let todosOsDadosDesempenho = [];
 
 const CAMINHO_IMAGENS = 'Imagens veiculos/';
@@ -41,7 +43,8 @@ async function iniciarDashboard() {
         [todosOsDadosCustos, todosOsDadosVeiculos, todosOsDadosDesempenho] = await Promise.all([
             carregarDados(URL_CUSTOS_FIXOS, 'custos'),
             carregarDados(URL_PAINEL_VEICULOS, 'veiculos'),
-            carregarDados(URL_DESEMPENHO_FROTA, 'desempenho')
+            carregarDados(URL_DESEMPENHO_FROTA, 'desempenho'),
+            carregarDados(URL_CONTRATOS, 'contratos')
         ]);
 
         if (todosOsDadosDesempenho) {
@@ -91,6 +94,8 @@ function iniciarRotacao(intervalo) {
             renderizarPainelFrota(todosOsDadosVeiculos);
         } else if (telaAtiva.id === 'dashboard-desempenho-frota' && todosOsDadosDesempenho) {
             atualizarPainelDesempenho();
+        } else if (telaAtiva.id === 'dashboard-contratos' && todosOsDadosContratos) {
+            renderizarPainelContratos(todosOsDadosContratos);
         }
     };
 
@@ -580,6 +585,71 @@ function renderizarPainelFrota(dadosVeiculos) {
         document.getElementById('frota-detalhes').classList.remove('visivel');
      });
 }
+
+// --- Funções da Tela de Contratos ---
+function renderizarPainelContratos(dadosContratos) {
+    const grid = document.getElementById('contratos-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+
+    const hoje = new Date();
+    const dataAlerta = new Date();
+    dataAlerta.setMonth(hoje.getMonth() + 3);
+
+    const contratosValidos = dadosContratos.filter(c => c['EMPRESA CONTRATADA'] && c['VIGËNCIA']);
+
+    contratosValidos.forEach(contrato => {
+        const empresa = contrato['EMPRESA CONTRATADA'];
+        const vigenciaTexto = contrato['VIGËNCIA'];
+        
+        const dataFimTexto = vigenciaTexto.split(' a ')[1];
+        if (!dataFimTexto) return;
+
+        const [dia, mes, ano] = dataFimTexto.split('/');
+        const dataFim = new Date(ano, mes - 1, dia);
+
+        let statusClasse = 'contrato-ok';
+        let statusTexto = 'Em vigor';
+
+        if (dataFim < hoje) {
+            statusClasse = 'contrato-vencido';
+            statusTexto = 'Vencido';
+        } else if (dataFim <= dataAlerta) {
+            statusClasse = 'contrato-alerta';
+            statusTexto = 'Vence em breve';
+        }
+
+        const card = document.createElement('div');
+        card.className = `contrato-card ${statusClasse}`;
+        card.innerHTML = `<div class="contrato-status" title="${statusTexto}"></div><h5>${empresa}</h5>`;
+
+        card.addEventListener('click', () => {
+            document.getElementById('detalhe-contrato-empresa').textContent = empresa;
+            document.getElementById('detalhe-contrato-gestor').textContent = contrato.GESTOR;
+            document.getElementById('detalhe-contrato-fiscal').textContent = contrato.FISCAL;
+            document.getElementById('detalhe-contrato-suplente').textContent = contrato.SUPLENTE;
+            document.getElementById('detalhe-contrato-cnpj').textContent = contrato.CNPJ;
+            document.getElementById('detalhe-contrato-processo-raiz').textContent = contrato['PROCESSO RAIZ'];
+            document.getElementById('detalhe-contrato-processo-fiscalizacao').textContent = contrato.FISCALIZAÇÃO;
+            document.getElementById('detalhe-contrato-vigencia').textContent = contrato['VIGËNCIA'];
+            document.getElementById('detalhe-contrato-prorrogacao1').textContent = contrato['PRORROGAÇÃO 1'];
+            document.getElementById('detalhe-contrato-prorrogacao2').textContent = contrato['PRORROGAÇÃO 2'];
+            document.getElementById('detalhe-contrato-repactuacao1').textContent = contrato['REPACTUAÇÃO 1'];
+            document.getElementById('detalhe-contrato-repactuacao2').textContent = contrato['REPACTUAÇÃO 2'];
+            document.getElementById('detalhe-contrato-responsavel').textContent = contrato['RESPONSÁVEL CONTRATADA'];
+            document.getElementById('detalhe-contrato-email').textContent = contrato.EMAIL;
+            document.getElementById('detalhe-contrato-telefone').textContent = contrato.TELEFONE;
+
+            document.getElementById('contrato-detalhes').classList.add('visivel');
+        });
+        grid.appendChild(card);
+    });
+
+    document.getElementById('fechar-detalhes-contrato').addEventListener('click', () => {
+        document.getElementById('contrato-detalhes').classList.remove('visivel');
+    });
+}
+
 
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---

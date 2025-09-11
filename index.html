@@ -62,14 +62,7 @@
                 </div>
             </div>
         </section>
-
-        <section id="dashboard-orcamento" class="dashboard-tela">
-            <h2 class="titulo-tela"><i class="fa-solid fa-chart-pie"></i> Controle de Contratos</h2>
-            <div class="conteudo-tela">
-                <p>Painel de Controle de Contratos em construção.</p>
-            </div>
-        </section>
-
+        
         <section id="dashboard-contratos" class="dashboard-tela">
             <h2 class="titulo-tela"><i class="fa-solid fa-file-signature"></i> Controle de Contratos</h2>
             <div class="conteudo-tela">
@@ -159,7 +152,7 @@
                         <p id="desempenho-total-km">0 km</p>
                     </div>
                     <div class="card">
-                        <h3>Custo Médio / Km</h3>
+                        <h3>Custo Médio / Litro</h3>
                         <p id="desempenho-custo-litro">R$ 0,00</p>
                     </div>
                     <div class="card">
@@ -169,19 +162,19 @@
                 </div>
 
                 <div class="graficos-container">
-            <div class="grafico-wrapper">
-                <h4 id="titulo-desempenho-esquerda">Gasto por Diretoria</h4>
-                <div class="grafico-canvas-container">
-                    <canvas id="grafico-desempenho-esquerda"></canvas>
+                    <div class="grafico-wrapper">
+                        <h4 id="titulo-desempenho-esquerda">Gasto por Diretoria</h4>
+                        <div class="grafico-canvas-container">
+                            <canvas id="grafico-desempenho-esquerda"></canvas>
+                        </div>
+                    </div>
+                    <div class="grafico-wrapper">
+                        <h4 id="titulo-desempenho-direita">Custo por Litro por Veículo</h4>
+                        <div class="grafico-canvas-container" id="container-desempenho-direita">
+                            <canvas id="grafico-desempenho-direita"></canvas>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="grafico-wrapper">
-                <h4 id="titulo-desempenho-direita">Custo por Litro por Veículo</h4>
-                <div class="grafico-canvas-container" id="container-desempenho-direita">
-                    <canvas id="grafico-desempenho-direita"></canvas>
-                </div>
-            </div>
-        </div>
             </div>
         </section>
     </main>
