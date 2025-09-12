@@ -364,8 +364,8 @@ body {
     object-fit: contain;
     padding: 10px;
     flex-grow: 1;
-    background-color: white; /* <-- ADICIONADO: Fundo branco */
-    border-radius: 5px;      /* <-- ADICIONADO: Cantos levemente arredondados */
+    background-color: white; /* <-- Fundo branco */
+    border-radius: 5px;      /* <-- Cantos levemente arredondados */
 }
 
 .contrato-card h5 {
@@ -402,6 +402,7 @@ body {
 
 .contrato-vencido .contrato-status {
     background-color: #e74c3c; /* Vermelho */
+    animation: piscar 1.5s infinite; /* fica oscilando o alerta */
 }
 
 .contrato-detalhes {
