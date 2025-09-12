@@ -4,7 +4,7 @@
 
 const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjgz3LwM4EZ_aE0awS6p_0R6XGKysv8CEswX1RtYkP13hM6T-spibHXYNfvZ0QRPN1mjv0-ypVDmY2/pub?output=csv';
 const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?output=csv';
-const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRSn9z52SmwwstiOq194utY7usOYAKU5yryxM6A1-tAdubIFFSu6OecdHwB6EYresL0HoD02ecVlDDS/pub?gid=792570119&single=true&output=csv'; 
+const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRgHtViC2nIILt8CvDtm_QQvcPmgWyNMhvfCxSFe7e6V26V6nV6El2k_t8bYcidgCsJjCnsV9C0IaPJ/pub?output=csv'; 
 const URL_CONTRATOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRC7aX6MS72UNwVkPhLx1obkazO1aq3ilFDa5YH-dZ-uvr5ARo-JeekMlPQApO9fw/pub?gid=1997489103&single=true&output=csv';
 let todosOsDadosContratos = [];
 let todosOsDadosDesempenho = [];
@@ -536,7 +536,6 @@ function renderizarPainelFrota(dadosVeiculos) {
                               <p>${veiculo.Placa}</p>
                           </div>`;
 
-        // --- LÓGICA DE CLIQUE ATUALIZADA PARA LER AS COLUNAS _URL E CRIAR LINKS ---
         card.addEventListener('click', () => { 
             document.getElementById('detalhe-modelo').textContent = veiculo.Modelo;
             document.getElementById('detalhe-placa').textContent = veiculo.Placa;
@@ -546,29 +545,15 @@ function renderizarPainelFrota(dadosVeiculos) {
             document.getElementById('detalhe-revisao').textContent = statusTexto;
             document.getElementById('detalhe-cartao').textContent = veiculo.Cartão;
 
-            const multasSpan = document.getElementById('detalhe-multas');
-            const manutencaoSpan = document.getElementById('detalhe-manutencao');
-            const itemMultas = document.getElementById('item-multas');
-            const itemManutencao = document.getElementById('item-manutencao');
+            const itemProcesso = document.getElementById('item-processo');
+            const processoSpan = document.getElementById('detalhe-processo');
+            const processoUrl = veiculo.Processo_URL; // Lê a nova coluna
 
-            // Lê as URLs das colunas 
-            const multasUrl = veiculo.Multas_URL;
-            const manutencaoUrl = veiculo.Manutenção_URL; 
-
-            // Lógica para Multas
-            if (multasUrl && multasUrl.trim() !== '') {
-                itemMultas.style.display = 'block';
-                multasSpan.innerHTML = `<a href="${multasUrl}" target="_blank">Ver Processo SEI</a>`;
+            if (processoUrl && processoUrl.trim() !== '') {
+                itemProcesso.style.display = 'flex'; // 'flex' para alinhar com os outros itens
+                processoSpan.innerHTML = `<a href="${processoUrl}" target="_blank">Acessar Processo</a>`;
             } else {
-                itemMultas.style.display = 'none';
-            }
-
-            // Lógica para Manutenção
-            if (manutencaoUrl && manutencaoUrl.trim() !== '') {
-                itemManutencao.style.display = 'block';
-                manutencaoSpan.innerHTML = `<a href="${manutencaoUrl}" target="_blank">Ver Processo SEI</a>`;
-            } else {
-                itemManutencao.style.display = 'none';
+                itemProcesso.style.display = 'none';
             }
             
             document.getElementById('frota-detalhes').classList.add('visivel');
