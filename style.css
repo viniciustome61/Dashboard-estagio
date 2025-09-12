@@ -402,6 +402,7 @@ body {
 
 .contrato-vencido .contrato-status {
     background-color: #e74c3c; /* Vermelho */
+    animation: piscar 1.5s infinite; /* fica oscilando o alerta */
 }
 
 .contrato-detalhes {
