@@ -597,6 +597,8 @@ function renderizarPainelContratos(dadosContratos) {
     contratosValidos.forEach(contrato => {
         const empresa = contrato['EMPRESA CONTRATADA'];
         const vigenciaTexto = contrato['VIGËNCIA'];
+        // Assume que a pasta das imagens das empresas é 'Imagens Empresas/'
+        const nomeImagem = contrato.IMAGEM_URL; 
         
         const dataFimTexto = vigenciaTexto.split(' a ')[1];
         if (!dataFimTexto) return;
@@ -617,7 +619,13 @@ function renderizarPainelContratos(dadosContratos) {
 
         const card = document.createElement('div');
         card.className = `contrato-card ${statusClasse}`;
-        card.innerHTML = `<div class="contrato-status" title="${statusTexto}"></div><h5>${empresa}</h5>`;
+        
+        // --- HTML DO CARD ATUALIZADO COM A IMAGEM ---
+        card.innerHTML = `
+            <div class="contrato-status" title="${statusTexto}"></div>
+            <img src="Imagens Empresas/${nomeImagem}" onerror="this.onerror=null; this.src='Imagens veiculos/placeholder.png';" alt="${empresa}">
+            <h5>${empresa}</h5>
+        `;
 
         card.addEventListener('click', () => {
             document.getElementById('detalhe-contrato-empresa').textContent = empresa;

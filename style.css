@@ -341,27 +341,40 @@ body {
 /* --- ESTILOS DA TELA DE CONTRATOS --- */
 .contratos-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    grid-template-columns: repeat(4, 1fr); /* 4 colunas */
+    grid-template-rows: repeat(2, 1fr);    /* 2 linhas */
     gap: 20px;
     height: 100%;
-    overflow-y: auto;
-    padding-right: 10px;
 }
 
 .contrato-card {
     background-color: #34495e;
     border-radius: 8px;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    font-size: 1.1em;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     overflow: hidden;
-    min-height: 120px;
+    display: flex; /* Adicionado */
+    flex-direction: column; /* Adicionado */
+}
+
+.contrato-card img {
+    width: 100%;
+    height: 70%;
+    object-fit: contain;
+    padding: 10px;
+    flex-grow: 1;
+    background-color: white; /* <-- ADICIONADO: Fundo branco */
+    border-radius: 5px;      /* <-- ADICIONADO: Cantos levemente arredondados */
+}
+
+.contrato-card h5 {
+    background-color: rgba(44, 62, 80, 0.7);
+    padding: 10px;
+    margin: 0;
+    text-align: center;
+    font-size: 1.1em;
+    flex-shrink: 0;
 }
 
 .contrato-card:hover {
