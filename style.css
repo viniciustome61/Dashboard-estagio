@@ -467,3 +467,18 @@ body {
     border-top: 1px solid rgba(44, 62, 80, 0.5);
     margin: 10px 0;
 }
+/* Estilos para os links na janela de detalhes dos contratos */
+.contrato-detalhes a {
+    color: #ADD8E6; /* Azul claro */
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+.contrato-detalhes a:hover {
+    color: #FFF; /* Branco ao passar o mouse */
+}
+.contrato-detalhes.visivel {
+    opacity: 1;
+    pointer-events: auto; /* <-- GARANTE QUE OS CLIQUES SEJAM REATIVADOS */
+    transform: translate(-50%, -50%) scale(1);
+}
