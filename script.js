@@ -582,9 +582,8 @@ function renderizarPainelContratos(dadosContratos) {
     contratosValidos.forEach(contrato => {
         const empresa = contrato['EMPRESA CONTRATADA'];
         const vigenciaTexto = contrato['VIGËNCIA'];
-        // Assume que a pasta das imagens das empresas é 'Imagens Empresas/'
-        const nomeImagem = contrato.IMAGEM_URL; 
-        
+        const nomeImagem = contrato['IMAGEM_URL'];
+
         const dataFimTexto = vigenciaTexto.split(' a ')[1];
         if (!dataFimTexto) return;
 
@@ -604,8 +603,6 @@ function renderizarPainelContratos(dadosContratos) {
 
         const card = document.createElement('div');
         card.className = `contrato-card ${statusClasse}`;
-        
-        // --- HTML DO CARD ATUALIZADO COM A IMAGEM ---
         card.innerHTML = `
             <div class="contrato-status" title="${statusTexto}"></div>
             <img src="Imagens Empresas/${nomeImagem}" onerror="this.onerror=null; this.src='Imagens veiculos/placeholder.png';" alt="${empresa}">
@@ -613,21 +610,41 @@ function renderizarPainelContratos(dadosContratos) {
         `;
 
         card.addEventListener('click', () => {
+            // Preenche os dados de texto
             document.getElementById('detalhe-contrato-empresa').textContent = empresa;
-            document.getElementById('detalhe-contrato-gestor').textContent = contrato.GESTOR;
-            document.getElementById('detalhe-contrato-fiscal').textContent = contrato.FISCAL;
-            document.getElementById('detalhe-contrato-suplente').textContent = contrato.SUPLENTE;
-            document.getElementById('detalhe-contrato-cnpj').textContent = contrato.CNPJ;
-            document.getElementById('detalhe-contrato-processo-raiz').textContent = contrato['PROCESSO RAIZ'];
-            document.getElementById('detalhe-contrato-processo-fiscalizacao').textContent = contrato.FISCALIZAÇÃO;
-            document.getElementById('detalhe-contrato-vigencia').textContent = contrato['VIGËNCIA'];
-            document.getElementById('detalhe-contrato-prorrogacao1').textContent = contrato['PRORROGAÇÃO 1'];
-            document.getElementById('detalhe-contrato-prorrogacao2').textContent = contrato['PRORROGAÇÃO 2'];
-            document.getElementById('detalhe-contrato-repactuacao1').textContent = contrato['REPACTUAÇÃO 1'];
-            document.getElementById('detalhe-contrato-repactuacao2').textContent = contrato['REPACTUAÇÃO 2'];
-            document.getElementById('detalhe-contrato-responsavel').textContent = contrato['RESPONSÁVEL CONTRATADA'];
-            document.getElementById('detalhe-contrato-email').textContent = contrato.EMAIL;
-            document.getElementById('detalhe-contrato-telefone').textContent = contrato.TELEFONE;
+            document.getElementById('detalhe-contrato-gestor').textContent = contrato['GESTOR'] || '---';
+            document.getElementById('detalhe-contrato-fiscal').textContent = contrato['FISCAL'] || '---';
+            document.getElementById('detalhe-contrato-suplente').textContent = contrato['SUPLENTE'] || '---';
+            document.getElementById('detalhe-contrato-cnpj').textContent = contrato['CNPJ'] || '---';
+            document.getElementById('detalhe-contrato-vigencia').textContent = contrato['VIGËNCIA'] || '---';
+            document.getElementById('detalhe-contrato-repactuacao1').textContent = contrato['REPACTUAÇÃO 1'] || '---';
+            document.getElementById('detalhe-contrato-repactuacao2').textContent = contrato['REPACTUAÇÃO 2'] || '---';
+            document.getElementById('detalhe-contrato-responsavel').textContent = contrato['RESPONSÁVEL CONTRATADA'] || '---';
+            document.getElementById('detalhe-contrato-email').textContent = contrato['EMAIL'] || '---';
+            document.getElementById('detalhe-contrato-telefone').textContent = contrato['TELEFONE'] || '---';
+
+            // --- LÓGICA FINAL E CORRIGIDA PARA OS LINKS ---
+            // Função que lê a coluna, verifica se é um link e monta o campo
+            const configurarLink = (spanId, nomeColuna) => {
+                const spanElement = document.getElementById(spanId);
+                const url = contrato[nomeColuna];
+
+                if (spanElement) {
+                    // Verifica se a url existe, não está vazia e começa com http
+                    if (url && url.trim().startsWith('http')) {
+                        spanElement.innerHTML = `<a href="${url}" target="_blank">Ver Processo SEI</a>`;
+                    } else {
+                        // Se não houver URL válida na coluna, mostra "---"
+                        spanElement.textContent = '---';
+                    }
+                }
+            };
+
+            // Chama a função para cada campo de processo, usando o nome exato da coluna da planilha
+            configurarLink('detalhe-contrato-processo-raiz', 'PROCESSO RAIZ'); // Coluna E
+            configurarLink('detalhe-contrato-processo-fiscalizacao', 'FISCALIZAÇÃO'); // Coluna F
+            configurarLink('detalhe-contrato-prorrogacao1', 'PRORROGAÇÃO 1'); // Coluna M
+            configurarLink('detalhe-contrato-prorrogacao2', 'PRORROGAÇÃO 2'); // Coluna N
 
             document.getElementById('contrato-detalhes').classList.add('visivel');
         });
@@ -638,8 +655,6 @@ function renderizarPainelContratos(dadosContratos) {
         document.getElementById('contrato-detalhes').classList.remove('visivel');
     });
 }
-
-
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
 // =======================================================
