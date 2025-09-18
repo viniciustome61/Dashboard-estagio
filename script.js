@@ -423,8 +423,17 @@ function atualizarDashboard(dados, filtros) {
     }
     
     const custoAnualTotal = dadosAnoInteiro.reduce((soma, item) => soma + parseNumerico(item.ValorGasto), 0);
-    const mesesPassados = new Date().getMonth() + 1;
-    const custoMedioMensal = custoAnualTotal > 0 ? custoAnualTotal / mesesPassados : 0;
+    
+    // --- CORREÇÃO DO BUG APLICADA AQUI ---
+    // 1. Filtra apenas os dados que têm um valor de gasto maior que zero.
+    const dadosComGastos = dadosAnoInteiro.filter(d => parseNumerico(d.ValorGasto) > 0);
+    // 2. Cria um conjunto (Set) para obter apenas os nomes dos meses únicos que tiveram gastos.
+    const mesesComGastos = [...new Set(dadosComGastos.map(d => d.Mes))];
+    // 3. Conta quantos meses únicos existem. Se for 0, usa 1 para evitar divisão por zero.
+    const numeroDeMesesComGastos = mesesComGastos.length > 0 ? mesesComGastos.length : 1;
+    // 4. Calcula a média correta.
+    const custoMedioMensal = custoAnualTotal / numeroDeMesesComGastos;
+    
     const custoSelecaoAtual = dadosParaVisao.reduce((soma, item) => soma + parseNumerico(item.ValorGasto), 0);
     
     document.querySelector('#custo-anual-total-card h3').textContent = `Custo Anual Total (${anoAtual})`;
@@ -450,18 +459,14 @@ function atualizarDashboard(dados, filtros) {
             }
         });
         
-        // --- NOVA LÓGICA PARA CRIAR O DESTAQUE ---
-        // Cria um array de cores para os pontos, começando com a cor padrão
         const pointColors = Array(12).fill('#3498db');
-        // Se um mês foi selecionado, encontra o índice e muda a cor
         if (filtros.mes !== 'Todos') {
             const indiceMesSelecionado = MESES_ORDENADOS.indexOf(filtros.mes);
             if (indiceMesSelecionado !== -1) {
-                pointColors[indiceMesSelecionado] = '#e74c3c'; // Cor de destaque (vermelho)
+                pointColors[indiceMesSelecionado] = '#e74c3c';
             }
         }
         
-        // Renderiza o gráfico passando o novo array de cores
         renderizarGrafico('graficoAnualEmpresas', 'line', MESES_ORDENADOS, gastosMensais, `Custo Mensal de ${filtros.empresa}`, pointColors);
         
         const gastosValidos = dadosDaEmpresaNoAno.map(d => parseNumerico(d.ValorGasto)).filter(v => v > 0);
