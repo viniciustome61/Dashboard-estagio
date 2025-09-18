@@ -108,6 +108,7 @@ body {
     padding: 20px;
     border-radius: 10px;
     text-align: center;
+    min-width: 180px; /* Adicionado para evitar que os cards fiquem muito estreitos */
 }
 .card h3 {
     font-size: 1.1rem;
@@ -149,19 +150,11 @@ body {
 }
 
 /* --- ESTILOS PARA A TELA DE CONTROLE DE FROTA --- */
-#cards-resumo-frota .card h5 {
-    font-size: 0.9rem;
-    font-weight: 400;
-    color: #bdc3c7;
-    margin-bottom: 5px;
-    text-transform: uppercase;
-}
-/* --- ESTILO CORRIGIDO PARA A GRELHA DE VEÍCULOS 4x2 --- */
 .frota-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* Define 4 colunas de tamanho igual */
-    grid-template-rows: repeat(2, 1fr);    /* Define 2 linhas de tamanho igual */
-    gap: 20px;                             /* Espaçamento entre os cards */
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
+    gap: 20px;
     padding-top: 20px;
     flex: 1;
 }
@@ -174,20 +167,14 @@ body {
     position: relative;
     border: 3px solid transparent;
 }
-
 .veiculo-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
 }
-.veiculo-card.revisao-ok {
-    border-color: #2ecc71;
-}
-.veiculo-card.revisao-pendente {
-    border-color: #f1c40f;
-}
-.veiculo-card.revisao-atrasada {
-    border-color: #e74c3c;
-}
+.veiculo-card.revisao-ok { border-color: #2ecc71; }
+.veiculo-card.revisao-pendente { border-color: #f1c40f; }
+.veiculo-card.revisao-atrasada { border-color: #e74c3c; }
+
 .status-revisao {
     position: absolute;
     top: 10px;
@@ -197,57 +184,45 @@ body {
     border-radius: 50%;
     border: 2px solid #2c3e50;
 }
-.status-revisao.ok {
-    background-color: #2ecc71;
-}
-.status-revisao.revisar {
-    background-color: #f1c40f;
-}
+.status-revisao.ok { background-color: #2ecc71; }
+.status-revisao.revisar { background-color: #f1c40f; }
 .status-revisao.atrasada {
     background-color: #e74c3c;
     animation: piscar 1.5s infinite;
 }
 @keyframes piscar {
-    0% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.4;
-    }
-    100% {
-        opacity: 1;
-    }
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
 }
 .veiculo-card img {
     width: 100%;
-    height: 70%; /* Aumente esta porcentagem para dar mais espaço à imagem */
+    height: 70%;
     object-fit: cover;
     display: block;
-    flex-grow: 1; /* Permite que a imagem "cresça" para ocupar o espaço disponível */
+    flex-grow: 1;
 }
 .veiculo-card .veiculo-info {
-    background-color: #34495e; /* Um tom ligeiramente mais escuro para contraste */
-    padding: 8px 10px; /* Preenchimento interno */
+    background-color: #34495e;
+    padding: 8px 10px;
     text-align: center;
-    flex-shrink: 0; /* Impede que ele encolha */
-    height: 85px; /* Altura fixa para o bloco de informações */
+    flex-shrink: 0;
+    height: 85px;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Centraliza o texto verticalmente */
+    justify-content: center;
 }
-
 .veiculo-card .veiculo-info h5 {
     margin: 0;
-    font-size: 1.5em; /* Tamanho da fonte do modelo */
+    font-size: 1.5em;
     color: #ecf0f1;
-    white-space: nowrap; /* Evita quebra de linha */
-    overflow: hidden; /* Esconde o que exceder */
-    text-overflow: ellipsis; /* Adiciona "..." se o texto for muito longo */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
-
 .veiculo-card .veiculo-info p {
     margin: 0;
-    font-size: 1.0em; /* Tamanho da fonte da placa */
+    font-size: 1.0em;
     color: #bdc3c7;
 }
 .frota-detalhes {
@@ -286,10 +261,7 @@ body {
     text-align: center;
     margin-bottom: 20px;
 }
-.frota-detalhes ul {
-    list-style: none;
-    padding: 0;
-}
+.frota-detalhes ul { list-style: none; padding: 0; }
 .frota-detalhes ul li {
     font-size: 1.1rem;
     padding: 12px 0;
@@ -297,56 +269,23 @@ body {
     display: flex;
     justify-content: space-between;
 }
-.frota-detalhes ul li:last-child {
-    border-bottom: none;
-}
+.frota-detalhes ul li:last-child { border-bottom: none; }
 
-/* --- ESTILOS PARA OS INDICADORES (KPIs) --- */
-.kpi-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 20px;
-    width: 100%;
-    height: 100%;
-}
-.kpi-card {
-    background-color: #2c3e50;
-    border-radius: 8px;
-    padding: 15px;
-    text-align: center;
-}
-.kpi-card h5 {
-    font-size: 1rem;
-    font-weight: 400;
-    color: #bdc3c7;
-    margin-bottom: 5px;
-}
-.kpi-card p {
-    font-size: 1.8rem;
-    font-weight: 600;
-    color: #ffffff;
-}
-/* Estilos para os links "Ver Processo SEI" */
 .frota-detalhes a {
-    color: #ADD8E6; /* azul claro */
-    text-decoration: underline; /* Mantém o sublinhado para indicar que é um link */
-    font-weight: bold; /* Deixa o texto do link mais forte */
+    color: #ADD8E6;
+    text-decoration: underline;
+    font-weight: bold;
 }
-
-.frota-detalhes a:hover {
-    color: #FFF; /* Branco puro ao passar o mouse para um efeito de destaque */
-}
+.frota-detalhes a:hover { color: #FFF; }
 
 /* --- ESTILOS DA TELA DE CONTRATOS --- */
 .contratos-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr); /* 4 colunas */
-    grid-template-rows: repeat(2, 1fr);    /* 2 linhas */
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(2, 1fr);
     gap: 20px;
     height: 100%;
 }
-
 .contrato-card {
     background-color: #34495e;
     border-radius: 8px;
@@ -354,20 +293,18 @@ body {
     transition: transform 0.2s, box-shadow 0.2s;
     position: relative;
     overflow: hidden;
-    display: flex; /* Adicionado */
-    flex-direction: column; /* Adicionado */
+    display: flex;
+    flex-direction: column;
 }
-
 .contrato-card img {
     width: 100%;
     height: 70%;
     object-fit: contain;
     padding: 10px;
     flex-grow: 1;
-    background-color: white; /* <-- Fundo branco */
-    border-radius: 5px;      /* <-- Cantos levemente arredondados */
+    background-color: white;
+    border-radius: 5px;
 }
-
 .contrato-card h5 {
     background-color: rgba(44, 62, 80, 0.7);
     padding: 10px;
@@ -376,12 +313,10 @@ body {
     font-size: 1.1em;
     flex-shrink: 0;
 }
-
 .contrato-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 15px rgba(0,0,0,0.3);
 }
-
 .contrato-status {
     position: absolute;
     top: 10px;
@@ -391,20 +326,12 @@ body {
     border-radius: 50%;
     border: 2px solid #2c3e50;
 }
-
-.contrato-ok .contrato-status {
-    background-color: #2ecc71; /* Verde */
-}
-
-.contrato-alerta .contrato-status {
-    background-color: #f1c40f; /* Amarelo */
-}
-
+.contrato-ok .contrato-status { background-color: #2ecc71; }
+.contrato-alerta .contrato-status { background-color: #f1c40f; }
 .contrato-vencido .contrato-status {
-    background-color: #e74c3c; /* Vermelho */
-    animation: piscar 1.5s infinite; /* fica oscilando o alerta */
+    background-color: #e74c3c;
+    animation: piscar 1.5s infinite;
 }
-
 .contrato-detalhes {
     position: fixed;
     top: 50%;
@@ -421,13 +348,11 @@ body {
     pointer-events: none;
     transition: opacity 0.3s, transform 0.3s;
 }
-
 .contrato-detalhes.visivel {
     opacity: 1;
     pointer-events: auto;
     transform: translate(-50%, -50%) scale(1);
 }
-
 #fechar-detalhes-contrato {
     position: absolute;
     top: 15px;
@@ -439,46 +364,82 @@ body {
     cursor: pointer;
     transition: transform 0.2s;
 }
-#fechar-detalhes-contrato:hover {
-    transform: scale(1.2);
-}
-
+#fechar-detalhes-contrato:hover { transform: scale(1.2); }
 .contrato-detalhes h3 {
     text-align: center;
     margin-bottom: 20px;
 }
-
-.contrato-detalhes ul {
-    list-style: none;
-    padding: 0;
-}
-
+.contrato-detalhes ul { list-style: none; padding: 0; }
 .contrato-detalhes ul li {
     padding: 10px 0;
     border-bottom: 1px solid rgba(44, 62, 80, 0.5);
 }
-
-.contrato-detalhes ul li:last-child {
-    border-bottom: none;
-}
-
+.contrato-detalhes ul li:last-child { border-bottom: none; }
 .contrato-detalhes hr {
     border: none;
     border-top: 1px solid rgba(44, 62, 80, 0.5);
     margin: 10px 0;
 }
-/* Estilos para os links na janela de detalhes dos contratos */
 .contrato-detalhes a {
-    color: #ADD8E6; /* Azul claro */
+    color: #ADD8E6;
     text-decoration: underline;
     font-weight: bold;
 }
+.contrato-detalhes a:hover { color: #FFF; }
 
-.contrato-detalhes a:hover {
-    color: #FFF; /* Branco ao passar o mouse */
+/* --- ESTILOS DE RESPONSIVIDADE --- */
+
+/* Telas de Tablet */
+@media (max-width: 992px) {
+    .cards-resumo, .graficos-container, .filtros-container {
+        flex-direction: column;
+    }
+    .filtros-container button {
+        margin-left: 0;
+        width: 100%;
+    }
+    .titulo-tela {
+        font-size: 1.5rem;
+    }
+    .card p {
+        font-size: 1.8rem;
+    }
+    .frota-grid, .contratos-grid {
+        grid-template-columns: repeat(2, 1fr);
+        grid-template-rows: auto; /* Altura automática para as linhas */
+    }
+    .contrato-detalhes, .frota-detalhes {
+        width: 95%;
+        padding: 20px;
+    }
 }
-.contrato-detalhes.visivel {
-    opacity: 1;
-    pointer-events: auto; /* <-- GARANTE QUE OS CLIQUES SEJAM REATIVADOS */
-    transform: translate(-50%, -50%) scale(1);
+
+/* Telas de Celular */
+@media (max-width: 768px) {
+    body {
+        overflow: auto; /* Permite a rolagem da página */
+        align-items: flex-start; /* Alinha o conteúdo no topo */
+    }
+    #app {
+        height: auto;
+        padding: 10px 0;
+    }
+    .dashboard-tela {
+        height: auto;
+        padding: 15px;
+    }
+    .frota-grid, .contratos-grid {
+        grid-template-columns: 1fr; /* Uma coluna para os cards */
+    }
+    .titulo-tela {
+        font-size: 1.3rem;
+        text-align: center;
+        justify-content: center;
+    }
+    .veiculo-card .veiculo-info h5 {
+        font-size: 1.2em;
+    }
+    .contrato-card h5 {
+        font-size: 1em;
+    }
 }
