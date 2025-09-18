@@ -21,7 +21,7 @@ const PALETA_DE_CORES = ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', 
 let mapaDeCores = {};
 
 const MAPEAMENTO_CORES_MANUAL = {
-    "PR": "#3498db", "DIG": "#e74c3c", "DGM": "#9b59b6", "DAF": "#f1c40f", "SERAFI": "#2ecc71", "DHT/DIHIBA": "#e24678ff"
+    "PR": "#3498db", "DIG": "#e9301bff", "DGM": "#9b59b6", "DAF": "#f1c40f", "SERAFI": "#2ecc71", "DHT/DIHIBA": "#e24678ff"
 };
 
 let temporizadorRotacao = null;
