@@ -238,7 +238,6 @@ function atualizarPainelDesempenho() {
     const combustivelSelecionado = document.getElementById('filtro-combustivel-desempenho').value;
 
     // --- 2. FILTRAR OS DADOS ---
-    // Este filtro geral é usado para os KPIs e para as visões de Diretoria/Geral
     let dadosFiltrados = todosOsDadosDesempenho.filter(item => {
         if (!item['Data/Hora']) return false;
         const mesDoItem = MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()];
@@ -272,11 +271,8 @@ function atualizarPainelDesempenho() {
         tituloEsquerda.textContent = `Evolução Mensal de Custos - ${veiculoSelecionado}`;
         tituloDireita.textContent = `Médias Gerais - ${veiculoSelecionado}`;
         
-        // --- NOVA LÓGICA AQUI ---
-        // 1. Pega TODOS os dados do veículo selecionado no ano, ignorando o filtro de mês por enquanto.
         const dadosDoVeiculoNoAno = todosOsDadosDesempenho.filter(item => item['Veículo'] === veiculoSelecionado);
 
-        // 2. Monta o array de gastos mensais com base nos dados do ano todo.
         const gastosMensais = Array(12).fill(0);
         dadosDoVeiculoNoAno.forEach(item => {
             if(item['Data/Hora']) {
@@ -287,23 +283,22 @@ function atualizarPainelDesempenho() {
             }
         });
 
-        // 3. Cria o array de cores para o destaque, usando o filtro de mês original.
         const pointColors = Array(12).fill('#3498db');
         if (mesSelecionado !== 'Todos') {
             const indiceMesSelecionado = MESES_ORDENADOS.indexOf(mesSelecionado);
             if (indiceMesSelecionado !== -1) {
-                pointColors[indiceMesSelecionado] = '#e74c3c'; // Cor de destaque
+                pointColors[indiceMesSelecionado] = '#e74c3c';
             }
         }
 
-        // 4. Renderiza o gráfico de linha com os dados do ano todo e o destaque.
         renderizarGrafico('grafico-desempenho-esquerda', 'line', MESES_ORDENADOS, gastosMensais, 'Custo Mensal', pointColors);
 
-        // Os KPIs da direita continuam usando 'dadosFiltrados', que já respeita o mês selecionado.
         const numeroAbastecimentos = dadosFiltrados.length;
         const custoMedioAbastecimento = numeroAbastecimentos > 0 ? custoTotal / numeroAbastecimentos : 0;
         const litrosMedioAbastecimento = numeroAbastecimentos > 0 ? totalLitros / numeroAbastecimentos : 0;
         
+        // --- CORREÇÃO APLICADA AQUI ---
+        // Voltamos a usar a classe "kpi-container-vertical", que agora possui o estilo correto no CSS.
         containerDireita.innerHTML = `
             <div class="kpi-container-vertical">
                 <div class="kpi-card"><h5>Eficiência Média (Km/L)</h5><p>${eficienciaMedia.toFixed(1)}</p></div>
@@ -370,7 +365,6 @@ function atualizarPainelDesempenho() {
         renderizarGrafico('grafico-desempenho-direita', 'bar', custoLitroPorVeiculo.map(d => d.veiculo), custoLitroPorVeiculo.map(d => d.custoLitro), 'Custo por Litro');
     }
 }
-
 // --- Funções da Tela de Custos Fixos ---
 
 function popularFiltros(dados) {
