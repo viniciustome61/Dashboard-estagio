@@ -20,14 +20,29 @@ const REVISAO_INTERVALO_KM = 10000;
 const REVISAO_ALERTA_KM = 2000;
 const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-// Paleta de cores padrão para os gráficos.
-const PALETA_DE_CORES = ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', '#1abc9c', '#e67e22', '#d35400'];
-let mapaDeCores = {};
+// --- CORREÇÃO DEFINITIVA APLICADA AQUI ---
+// Mapa de cores fixo e consistente, usando a paleta de cores original.
+const mapaDeCores = {
+    // Diretorias
+    "PR": "#3498db", "DIG": "#e74c3c", "DGM": "#9b59b6", "DAF": "#f1c40f", 
+    "SERAFI": "#2ecc71", "DHT/DIHIBA": "#e24678ff",
 
-// Mapeamento manual para garantir cores consistentes para categorias importantes.
-const MAPEAMENTO_CORES_MANUAL = {
-    "PR": "#3498db", "DIG": "#e74c3c", "DGM": "#9b59b6", "DAF": "#f1c40f", "SERAFI": "#2ecc71", "DHT/DIHIBA": "#e24678ff"
+    // Empresas com cores fixas e únicas da paleta original
+    "CENTRAL BRASÍLIA": "#3498db",      // Azul
+    "G.S.I": "#e1ef4aff",                  // Verde
+    "SOLUTION": "#e74c3c",               // Vermelho
+    "NEOENERGIA": "#7844f0ff",             // Amarelo
+    "TICKET SOLUÇÕES": "#32f61dff",      // Laranja
+    "IPHAC": "#9b59b6",                  // Roxo
+    "SUPRIMENTO DE FUNDOS": "#1abc9c",  // Verde-água
+    "TELEFONIA MÓVEL": "#d35400",       // Laranja escuro
+    "FAST FLEET": "#34495e",           // Azul escuro
+    "MDL": "#7f8c8d",                   // Cinza
+    "ECT": "#ff1900ff",                   // Vermelho escuro
+    // Adicione mais empresas aqui conforme necessário
 };
+// Paleta de cores para categorias que não estão no mapa acima, para evitar erros.
+const PALETA_DE_CORES_FALLBACK = ['#24fff0ff', '#f30a5cff', '#9e2323ff', '#0d8d71ff'];
 
 // Variáveis para controlar a rotação automática de telas e a inatividade do usuário.
 let temporizadorRotacao = null;
@@ -46,7 +61,6 @@ document.addEventListener('DOMContentLoaded', iniciarDashboard);
 
 async function iniciarDashboard() {
     try {
-        // Carrega todos os dados das planilhas em paralelo para otimizar o tempo.
         const [dadosCarregadosCustos, dadosVeiculos, dadosDesempenho, dadosContratos] = await Promise.all([
             carregarDados(URL_CUSTOS_FIXOS, 'custos'),
             carregarDados(URL_PAINEL_VEICULOS, 'veiculos'),
@@ -54,35 +68,25 @@ async function iniciarDashboard() {
             carregarDados(URL_CONTRATOS, 'contratos')
         ]);
         
-        // Transforma os dados de custo do novo formato (largo) para o formato antigo (longo).
         todosOsDadosCustos = transformarDadosCustos(dadosCarregadosCustos);
         todosOsDadosVeiculos = dadosVeiculos;
         todosOsDadosDesempenho = dadosDesempenho;
         todosOsDadosContratos = dadosContratos;
 
-        // Processa e prepara os dados de desempenho da frota se eles foram carregados.
         if (todosOsDadosDesempenho) {
             todosOsDadosDesempenho = limparDadosDesempenho(todosOsDadosDesempenho);
-            const diretoriasUnicas = [...new Set(todosOsDadosDesempenho.map(item => item.Diretoria).filter(d => d))].sort();
-            gerarMapaDeCores(diretoriasUnicas);
             popularFiltrosDesempenho(todosOsDadosDesempenho);
             configurarEventListenerDesempenho();
         }
 
-        // Processa e prepara os dados de custos fixos se eles foram carregados.
         if (todosOsDadosCustos) {
-            const empresasUnicas = [...new Set(todosOsDadosCustos.map(item => item.Empresa).filter(e => e))].sort();
-            gerarMapaDeCores(empresasUnicas);
             popularFiltros(todosOsDadosCustos);
             configurarEventListeners();
         }
         
-        // Inicia a rotação automática das telas e o sensor de atividade do mouse.
         iniciarRotacao(10000); 
         configurarSensorDeAtividade();
-
     } catch (erro) {
-        // Em caso de falha no carregamento, exibe uma mensagem de erro no console e na tela.
         console.error("Erro fatal ao iniciar o dashboard:", erro);
         const app = document.getElementById('app');
         if (app) {
@@ -170,7 +174,6 @@ function iniciarRotacao(intervalo) {
 
 /**
  * Pausa a rotação automática de telas quando detecta atividade do usuário.
- * Reinicia a rotação após um período de inatividade.
  */
 function reiniciarTimerDeInatividade() {
     clearInterval(temporizadorRotacao);
@@ -193,9 +196,6 @@ function configurarSensorDeAtividade() {
 
 /**
  * Carrega dados de uma URL (planilha CSV) e os converte para JSON.
- * @param {string} url - A URL da planilha publicada como CSV.
- * @param {string} nomeDados - Um nome descritivo para os dados (usado em logs de erro).
- * @returns {Promise<Array<Object>>} - Uma promessa que resolve para um array de objetos.
  */
 async function carregarDados(url, nomeDados) {
     if (!url || !url.startsWith('https')) {
@@ -208,7 +208,6 @@ async function carregarDados(url, nomeDados) {
         }
         const textoCsv = await resposta.text();
         const { data } = Papa.parse(textoCsv, { header: true, skipEmptyLines: true });
-        console.log(`Dados de ${nomeDados} carregados com sucesso.`);
         return data;
     } catch (erro) {
         console.error(`Erro crítico ao carregar ou processar dados de ${nomeDados}:`, erro);
@@ -218,8 +217,6 @@ async function carregarDados(url, nomeDados) {
 
 /**
  * Converte uma string (potencialmente formatada como moeda) em um número.
- * @param {string|number} valor - O valor a ser convertido.
- * @returns {number} - O valor convertido para número, ou 0 se a conversão falhar.
  */
 function parseNumerico(valor) {
     if (typeof valor === 'number') return valor;
@@ -237,35 +234,17 @@ function parseNumerico(valor) {
 
 /**
  * Formata um número para o padrão de moeda brasileiro (BRL).
- * @param {number} valor - O número a ser formatado.
- * @returns {string} - A string formatada como moeda.
  */
 function formatarMoeda(valor) {
     if (typeof valor !== 'number' || isNaN(valor)) return "R$ 0,00";
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-/**
- * Associa uma cor a cada item de uma lista, usando um mapa de cores pré-definido
- * ou gerando cores dinamicamente.
- * @param {Array<string>} listaDeItens - Lista de categorias (ex: empresas, diretorias).
- */
-function gerarMapaDeCores(listaDeItens) {
-    let proximaCorIndex = 0;
-    listaDeItens.forEach(item => {
-        if (!mapaDeCores[item]) {
-            if (MAPEAMENTO_CORES_MANUAL[item]) {
-                mapaDeCores[item] = MAPEAMENTO_CORES_MANUAL[item];
-            } else {
-                mapaDeCores[item] = PALETA_DE_CORES[proximaCorIndex % PALETA_DE_CORES.length];
-                proximaCorIndex++;
-            }
-        }
-    });
-}
-
 // --- Funções da Nova Tela de Desempenho ---
 
+/**
+ * Limpa os dados de desempenho, removendo espaços extras dos nomes das colunas.
+ */
 function limparDadosDesempenho(dados) {
     return dados.map(item => {
         const itemLimpo = {};
@@ -277,6 +256,9 @@ function limparDadosDesempenho(dados) {
     });
 }
 
+/**
+ * Preenche os menus de filtro na tela de Desempenho da Frota.
+ */
 function popularFiltrosDesempenho(dados) {
     const filtroMes = document.getElementById('filtro-mes-desempenho');
     const filtroDiretoria = document.getElementById('filtro-diretoria-desempenho');
@@ -311,6 +293,9 @@ function popularFiltrosDesempenho(dados) {
     criarOpcoes(filtroCombustivel, combustiveisUnicos, 'Todos os Tipos');
 }
 
+/**
+ * Adiciona o event listener ao botão de filtro da tela de Desempenho.
+ */
 function configurarEventListenerDesempenho() {
     const botaoFiltrar = document.getElementById('botao-filtrar-desempenho');
     if (botaoFiltrar) {
@@ -320,6 +305,9 @@ function configurarEventListenerDesempenho() {
     }
 }
 
+/**
+ * Atualiza os KPIs e gráficos da tela de Desempenho com base nos filtros selecionados.
+ */
 function atualizarPainelDesempenho() {
     const mesSelecionado = document.getElementById('filtro-mes-desempenho').value;
     const diretoriaSelecionada = document.getElementById('filtro-diretoria-desempenho').value;
@@ -445,13 +433,16 @@ function atualizarPainelDesempenho() {
 
 // --- Funções da Tela de Custos Fixos ---
 
+/**
+ * Preenche os menus de filtro na tela de Custos Fixos.
+ */
 function popularFiltros(dados) {
     const filtroMes = document.getElementById('filtro-mes');
     const filtroEmpresa = document.getElementById('filtro-empresa');
     if(!filtroMes || !filtroEmpresa) return;
 
     const anoAtual = new Date().getFullYear();
-    const dadosAnoAtual = dados.filter(d => Number(d.Ano) === anoAtual);
+    const dadosAnoAtual = dados.filter(d => d.Ano && parseNumerico(d.Ano) === anoAtual);
     const mesesUnicos = [...new Set(dadosAnoAtual.map(item => item.Mes.trim()))].sort((a, b) => MESES_ORDENADOS.indexOf(a) - MESES_ORDENADOS.indexOf(b));
     const empresasUnicas = [...new Set(dadosAnoAtual.map(item => item.Empresa.trim()))].sort();
 
@@ -471,6 +462,9 @@ function popularFiltros(dados) {
     });
 }
 
+/**
+ * Adiciona o event listener ao botão de filtro da tela de Custos Fixos.
+ */
 function configurarEventListeners() {
     const botaoFiltrar = document.getElementById('botao-filtrar');
     if(!botaoFiltrar) return;
@@ -482,9 +476,12 @@ function configurarEventListeners() {
     });
 }
 
+/**
+ * Atualiza os KPIs e gráficos da tela de Custos Fixos com base nos filtros selecionados.
+ */
 function atualizarDashboard(dados, filtros) {
     const anoAtual = new Date().getFullYear();
-    const dadosAnoInteiro = dados.filter(d => parseNumerico(d.Ano) === anoAtual);
+    const dadosAnoInteiro = dados.filter(d => d.Ano && parseNumerico(d.Ano) === anoAtual);
     
     let dadosParaVisao = [...dadosAnoInteiro];
     if (filtros.mes !== 'Todos') {
@@ -569,6 +566,9 @@ function atualizarDashboard(dados, filtros) {
 
 // --- Funções da Tela de Frota ---
 
+/**
+ * Renderiza os cards de veículos na tela de Controle de Frota.
+ */
 function renderizarPainelFrota(dadosVeiculos) {
     const frotaGrid = document.getElementById('frota-grid');
     if (!frotaGrid) return;
@@ -638,6 +638,10 @@ function renderizarPainelFrota(dadosVeiculos) {
 }
 
 // --- Funções da Tela de Contratos ---
+
+/**
+ * Renderiza os cards de contratos na tela de Controle de Contratos.
+ */
 function renderizarPainelContratos(dadosContratos) {
     const grid = document.getElementById('contratos-grid');
     if (!grid) return;
@@ -724,6 +728,9 @@ function renderizarPainelContratos(dadosContratos) {
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
 // =======================================================
 
+/**
+ * Renderiza um gráfico usando a biblioteca Chart.js em um elemento canvas.
+ */
 function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColors = null) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) { return; }
@@ -732,7 +739,8 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
     if (canvas.chart) { canvas.chart.destroy(); }
     
     const corTextoEixos = '#bdc3c7';
-    const backgroundColors = labels.map((label, index) => mapaDeCores[label] || PALETA_DE_CORES[index % PALETA_DE_CORES.length]);
+    // Utiliza o mapa de cores fixo e, se uma cor não estiver lá, usa uma cor de fallback.
+    const backgroundColors = labels.map((label, index) => mapaDeCores[label] || PALETA_DE_CORES_FALLBACK[index % PALETA_DE_CORES_FALLBACK.length]);
     
     const dataset = {
         label: labelDataset,
