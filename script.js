@@ -2,40 +2,51 @@
 // --- CONFIGURAÇÃO INICIAL E VARIÁVEIS GLOBAIS ---
 // =======================================================
 
+// URLs para as planilhas do Google Sheets que servem como fonte de dados.
 const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=620605596&single=true&output=csv';
 const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=1497148731&single=true&output=csv';
-const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=1074663302&single=true&output=csv'; 
+const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=1074663302&single=true&output=csv';
 const URL_CONTRATOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=1219538623&single=true&output=csv';
+
+// Arrays que armazenarão os dados carregados das planilhas.
 let todosOsDadosContratos = [];
 let todosOsDadosDesempenho = [];
-
-const CAMINHO_IMAGENS = 'Imagens veiculos/';
-const REVISAO_INTERVALO_KM = 10000;
-const REVISAO_ALERTA_KM = 2000;
-const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-
 let todosOsDadosCustos = [];
 let todosOsDadosVeiculos = [];
 
-const PALETA_DE_CORES = ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', '#1abc9c', '#e67e22', '#d35400'];
-let mapaDeCores = {};
+// Constantes de configuração para a lógica da aplicação.
+const CAMINHO_IMAGENS = 'Imagens veiculos/';
+const REVISAO_INTERVALO_KM = 10000; // Intervalo padrão para revisão de veículos.
+const REVISAO_ALERTA_KM = 2000;   // Limite para acionar o alerta de revisão próxima.
+const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
+// Paleta de cores padrão para os gráficos.
+const PALETA_DE_CORES = ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', '#1abc9c', '#e67e22', '#d35400'];
+let mapaDeCores = {}; // Objeto para mapear categorias (empresas, diretorias) a cores.
+
+// Mapeamento manual para garantir cores consistentes para categorias importantes.
 const MAPEAMENTO_CORES_MANUAL = {
     "PR": "#3498db", "DIG": "#e74c3c", "DGM": "#9b59b6", "DAF": "#f1c40f", "SERAFI": "#2ecc71", "DHT/DIHIBA": "#e24678ff"
 };
 
+// Variáveis para controlar a rotação automática de telas e a inatividade do usuário.
 let temporizadorRotacao = null;
 let temporizadorInatividade = null;
-const TEMPO_DE_INATIVIDADE = 10000;
+const TEMPO_DE_INATIVIDADE = 10000; // 10 segundos.
 
 // =======================================================
 // --- PONTO DE PARTIDA DA APLICAÇÃO ---
 // =======================================================
 
+/**
+ * Função principal que é executada quando o DOM está totalmente carregado.
+ * Responsável por orquestrar o carregamento de todos os dados e a inicialização dos painéis.
+ */
 document.addEventListener('DOMContentLoaded', iniciarDashboard);
 
 async function iniciarDashboard() {
     try {
+        // Carrega todos os dados das planilhas em paralelo para otimizar o tempo.
         [todosOsDadosCustos, todosOsDadosVeiculos, todosOsDadosDesempenho, todosOsDadosContratos] = await Promise.all([
             carregarDados(URL_CUSTOS_FIXOS, 'custos'),
             carregarDados(URL_PAINEL_VEICULOS, 'veiculos'),
@@ -43,6 +54,7 @@ async function iniciarDashboard() {
             carregarDados(URL_CONTRATOS, 'contratos')
         ]);
 
+        // Processa e prepara os dados de desempenho da frota se eles foram carregados.
         if (todosOsDadosDesempenho) {
             todosOsDadosDesempenho = limparDadosDesempenho(todosOsDadosDesempenho);
             const diretoriasUnicas = [...new Set(todosOsDadosDesempenho.map(item => item.Diretoria).filter(d => d))].sort();
@@ -51,6 +63,7 @@ async function iniciarDashboard() {
             configurarEventListenerDesempenho();
         }
 
+        // Processa e prepara os dados de custos fixos se eles foram carregados.
         if (todosOsDadosCustos) {
             const empresasUnicas = [...new Set(todosOsDadosCustos.map(item => item.Empresa).filter(e => e))].sort();
             gerarMapaDeCores(empresasUnicas);
@@ -58,15 +71,18 @@ async function iniciarDashboard() {
             configurarEventListeners();
         }
         
+        // Inicia a rotação automática das telas e o sensor de atividade do mouse.
         iniciarRotacao(10000); 
         configurarSensorDeAtividade();
+
     } catch (erro) {
+        // Em caso de falha no carregamento, exibe uma mensagem de erro no console e na tela.
         console.error("Erro fatal ao iniciar o dashboard:", erro);
         const app = document.getElementById('app');
         if (app) {
             app.innerHTML = `<div class="mensagem-erro">
                 <h1>Erro ao carregar os dados</h1>
-                <p>Não foi possível carregar os dados das planilhas. Verifique o console (F12) para mais detalhes e certifique-se de que as planilhas estão publicadas corretamente.</p>
+                <p>Não foi possível carregar os dados das planilhas. Verifique o console (F12) para mais detalhes.</p>
             </div>`;
         }
     }
@@ -76,11 +92,16 @@ async function iniciarDashboard() {
 // --- FUNÇÕES DE ROTAÇÃO DE TELA E DETECÇÃO DE ATIVIDADE ---
 // =======================================================
 
+/**
+ * Inicia a transição automática entre as diferentes telas do dashboard.
+ * @param {number} intervalo - O tempo em milissegundos para alternar entre as telas.
+ */
 function iniciarRotacao(intervalo) {
     const telas = document.querySelectorAll('.dashboard-tela');
-    if (telas.length <= 1) return;
+    if (telas.length <= 1) return; // Não rotaciona se houver apenas uma tela.
     let telaAtual = 0;
     
+    // Função interna para atualizar o conteúdo da tela ativa no momento da transição.
     const executarAtualizacoes = () => {
         const telaAtiva = telas[telaAtual];
         
@@ -95,8 +116,9 @@ function iniciarRotacao(intervalo) {
         }
     };
 
-    executarAtualizacoes();
+    executarAtualizacoes(); // Executa a primeira atualização.
 
+    // Define um intervalo para alternar as classes 'ativo' e atualizar as telas.
     temporizadorRotacao = setInterval(() => {
         telas[telaAtual].classList.remove('ativo');
         telaAtual = (telaAtual + 1) % telas.length;
@@ -105,6 +127,10 @@ function iniciarRotacao(intervalo) {
     }, intervalo);
 }
 
+/**
+ * Pausa a rotação automática de telas quando detecta atividade do usuário.
+ * Reinicia a rotação após um período de inatividade.
+ */
 function reiniciarTimerDeInatividade() {
     clearInterval(temporizadorRotacao);
     clearTimeout(temporizadorInatividade);
@@ -113,6 +139,9 @@ function reiniciarTimerDeInatividade() {
     }, TEMPO_DE_INATIVIDADE);
 }
 
+/**
+ * Adiciona um event listener para detectar movimentos do mouse e reiniciar o timer de inatividade.
+ */
 function configurarSensorDeAtividade() {
     window.addEventListener('mousemove', reiniciarTimerDeInatividade);
 }
@@ -121,6 +150,12 @@ function configurarSensorDeAtividade() {
 // --- FUNÇÕES DE LÓGICA E UTILITÁRIOS --- 
 // =======================================================
 
+/**
+ * Carrega dados de uma URL (planilha CSV) e os converte para JSON.
+ * @param {string} url - A URL da planilha publicada como CSV.
+ * @param {string} nomeDados - Um nome descritivo para os dados (usado em logs de erro).
+ * @returns {Promise<Array<Object>>} - Uma promessa que resolve para um array de objetos.
+ */
 async function carregarDados(url, nomeDados) {
     if (!url || !url.startsWith('https')) {
         throw new Error(`URL inválida ou ausente para ${nomeDados}`);
@@ -140,6 +175,11 @@ async function carregarDados(url, nomeDados) {
     }
 }
 
+/**
+ * Converte uma string (potencialmente formatada como moeda) em um número.
+ * @param {string|number} valor - O valor a ser convertido.
+ * @returns {number} - O valor convertido para número, ou 0 se a conversão falhar.
+ */
 function parseNumerico(valor) {
     if (typeof valor === 'number') return valor;
     if (typeof valor !== 'string' || !valor.trim()) return 0;
@@ -154,11 +194,21 @@ function parseNumerico(valor) {
     return isNaN(resultado) ? 0 : resultado;
 }
 
+/**
+ * Formata um número para o padrão de moeda brasileiro (BRL).
+ * @param {number} valor - O número a ser formatado.
+ * @returns {string} - A string formatada como moeda.
+ */
 function formatarMoeda(valor) {
     if (typeof valor !== 'number' || isNaN(valor)) return "R$ 0,00";
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+/**
+ * Associa uma cor a cada item de uma lista, usando um mapa de cores pré-definido
+ * ou gerando cores dinamicamente.
+ * @param {Array<string>} listaDeItens - Lista de categorias (ex: empresas, diretorias).
+ */
 function gerarMapaDeCores(listaDeItens) {
     let proximaCorIndex = 0;
     listaDeItens.forEach(item => {
@@ -654,21 +704,31 @@ function renderizarPainelContratos(dadosContratos) {
         document.getElementById('contrato-detalhes').classList.remove('visivel');
     });
 }
+
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
 // =======================================================
 
+/**
+ * Renderiza um gráfico usando a biblioteca Chart.js em um elemento canvas.
+ * @param {string} canvasId - O ID do elemento canvas.
+ * @param {string} tipo - O tipo de gráfico (ex: 'bar', 'pie', 'line').
+ * @param {Array<string>} labels - Os rótulos para o eixo X ou para as fatias da pizza.
+ * @param {Array<number>} data - Os dados numéricos para o gráfico.
+ * @param {string} labelDataset - O rótulo para o conjunto de dados.
+ * @param {Array<string>} [pointColors=null] - (Opcional) Cores específicas para pontos em gráficos de linha.
+ */
 function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColors = null) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) { return; }
     const ctx = canvas.getContext('2d');
     
+    // Destrói qualquer instância de gráfico anterior no mesmo canvas para evitar sobreposição.
     if (canvas.chart) { canvas.chart.destroy(); }
     
     const corTextoEixos = '#bdc3c7';
     const backgroundColors = labels.map((label, index) => mapaDeCores[label] || PALETA_DE_CORES[index % PALETA_DE_CORES.length]);
     
-    // Objeto base do dataset
     const dataset = {
         label: labelDataset,
         data: data,
@@ -678,11 +738,10 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
         fill: tipo === 'line'
     };
 
-    // --- NOVA LÓGICA DE DESTAQUE DOS PONTOS ---
-    // Se um array de cores para os pontos for fornecido, aplica ao gráfico
+    // Aplica cores customizadas para pontos se for um gráfico de linha e as cores forem fornecidas.
     if (tipo === 'line' && pointColors) {
         dataset.pointBackgroundColor = pointColors;
-        dataset.pointRadius = 5; // Deixa os pontos um pouco maiores para o destaque
+        dataset.pointRadius = 5;
         dataset.pointHoverRadius = 7;
         dataset.pointBorderColor = '#ffffff';
         dataset.pointBorderWidth = 1;
@@ -720,11 +779,12 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
         } : {}
     };
 
+    // Cria a nova instância do gráfico.
     canvas.chart = new Chart(ctx, {
         type: tipo,
         data: {
             labels: labels,
-            datasets: [dataset] // Usa o objeto de dataset que montamos
+            datasets: [dataset]
         },
         options: chartOptions
     });
