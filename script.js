@@ -21,7 +21,7 @@ const REVISAO_ALERTA_KM = 2000;
 const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 // Paleta de cores padrão para os gráficos.
-const PALETA_DE_CORES = ['#3498db', '#2ecc71', '#e74c3c', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22', '#d35400'];
+const PALETA_DE_CORES = ['#3498db', '#2ecc71', '#e74c3c', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22', '#d35400', '#7f00b6ff', '#00488fff', '#35cee5ff', '#e90c64ff', '#c0392b', '#d99b37ff', '#2980b9'];
 let mapaDeCores = {};
 
 // O contador de cores agora é global, para não ser reiniciado a cada chamada da função.
