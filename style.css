@@ -108,7 +108,7 @@ body {
     padding: 20px;
     border-radius: 10px;
     text-align: center;
-    min-width: 180px; /* Adicionado para evitar que os cards fiquem muito estreitos */
+    min-width: 180px; 
 }
 .card h3 {
     font-size: 1.1rem;
@@ -288,7 +288,6 @@ body {
     height: 100%;
 }
 
-/* --- NOVO ESTILO ADICIONADO AQUI --- */
 .kpi-container-vertical {
     display: flex;
     flex-direction: column;
@@ -305,7 +304,6 @@ body {
     text-align: center;
 }
 
-/* --- ALTERAÇÃO APLICADA AQUI --- */
 .kpi-card h5 {
     font-size: 1.2rem; /* Aumentado de 1rem */
     font-weight: 400;
@@ -314,7 +312,7 @@ body {
 }
 
 .kpi-card p {
-    font-size: 2.5rem; /* Aumentado de 1.8rem */
+    font-size: 2.5rem; 
     font-weight: 600;
     color: #ffffff;
 }
