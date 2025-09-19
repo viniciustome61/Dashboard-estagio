@@ -35,7 +35,7 @@ body {
     opacity: 0;
     transition: opacity 0.6s ease-in-out;
     pointer-events: none;
-    z-index: 1; /* Z-index para garantir que a tela esteja atrás de outras sobreposições */
+    z-index: 1;
 }
 .dashboard-tela.ativo {
     opacity: 1;
@@ -108,7 +108,6 @@ body {
     padding: 20px;
     border-radius: 10px;
     text-align: center;
-    min-width: 180px; 
 }
 .card h3 {
     font-size: 1.1rem;
@@ -270,7 +269,6 @@ body {
     justify-content: space-between;
 }
 .frota-detalhes ul li:last-child { border-bottom: none; }
-
 .frota-detalhes a {
     color: #ADD8E6;
     text-decoration: underline;
@@ -288,6 +286,7 @@ body {
     height: 100%;
 }
 
+/* --- ESTILO CORRIGIDO E ADICIONADO --- */
 .kpi-container-vertical {
     display: flex;
     flex-direction: column;
@@ -303,16 +302,14 @@ body {
     padding: 15px;
     text-align: center;
 }
-
 .kpi-card h5 {
-    font-size: 1.2rem; /* Aumentado de 1rem */
+    font-size: 1.2rem;
     font-weight: 400;
     color: #bdc3c7;
-    margin-bottom: 8px; /* Aumentado o espaçamento */
+    margin-bottom: 8px;
 }
-
 .kpi-card p {
-    font-size: 2.5rem; 
+    font-size: 2.5rem;
     font-weight: 600;
     color: #ffffff;
 }
@@ -425,60 +422,3 @@ body {
     font-weight: bold;
 }
 .contrato-detalhes a:hover { color: #FFF; }
-
-/* --- ESTILOS DE RESPONSIVIDADE --- */
-
-/* Telas de Tablet */
-@media (max-width: 992px) {
-    .cards-resumo, .graficos-container, .filtros-container {
-        flex-direction: column;
-    }
-    .filtros-container button {
-        margin-left: 0;
-        width: 100%;
-    }
-    .titulo-tela {
-        font-size: 1.5rem;
-    }
-    .card p {
-        font-size: 1.8rem;
-    }
-    .frota-grid, .contratos-grid {
-        grid-template-columns: repeat(2, 1fr);
-        grid-template-rows: auto; /* Altura automática para as linhas */
-    }
-    .contrato-detalhes, .frota-detalhes {
-        width: 95%;
-        padding: 20px;
-    }
-}
-
-/* Telas de Celular */
-@media (max-width: 768px) {
-    body {
-        overflow: auto; /* Permite a rolagem da página */
-        align-items: flex-start; /* Alinha o conteúdo no topo */
-    }
-    #app {
-        height: auto;
-        padding: 10px 0;
-    }
-    .dashboard-tela {
-        height: auto;
-        padding: 15px;
-    }
-    .frota-grid, .contratos-grid {
-        grid-template-columns: 1fr; /* Uma coluna para os cards */
-    }
-    .titulo-tela {
-        font-size: 1.3rem;
-        text-align: center;
-        justify-content: center;
-    }
-    .veiculo-card .veiculo-info h5 {
-        font-size: 1.2em;
-    }
-    .contrato-card h5 {
-        font-size: 1em;
-    }
-}

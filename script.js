@@ -20,29 +20,17 @@ const REVISAO_INTERVALO_KM = 10000;
 const REVISAO_ALERTA_KM = 2000;
 const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-// --- CORREÇÃO DEFINITIVA APLICADA AQUI ---
-// Mapa de cores fixo e consistente, usando a paleta de cores original.
-const mapaDeCores = {
-    // Diretorias
-    "PR": "#3498db", "DIG": "#e74c3c", "DGM": "#9b59b6", "DAF": "#f1c40f", 
-    "SERAFI": "#2ecc71", "DHT/DIHIBA": "#e24678ff",
+// Paleta de cores padrão para os gráficos.
+const PALETA_DE_CORES = ['#3498db', '#2ecc71', '#e74c3c', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22', '#d35400'];
+let mapaDeCores = {};
 
-    // Empresas com cores fixas e únicas da paleta original
-    "CENTRAL BRASÍLIA": "#3498db",      // Azul
-    "G.S.I": "#e1ef4aff",                  // Verde
-    "SOLUTION": "#e74c3c",               // Vermelho
-    "NEOENERGIA": "#7844f0ff",             // Amarelo
-    "TICKET SOLUÇÕES": "#32f61dff",      // Laranja
-    "IPHAC": "#9b59b6",                  // Roxo
-    "SUPRIMENTO DE FUNDOS": "#1abc9c",  // Verde-água
-    "TELEFONIA MÓVEL": "#d35400",       // Laranja escuro
-    "FAST FLEET": "#34495e",           // Azul escuro
-    "MDL": "#7f8c8d",                   // Cinza
-    "ECT": "#ff1900ff",                   // Vermelho escuro
-    // Adicione mais empresas aqui conforme necessário
+// O contador de cores agora é global, para não ser reiniciado a cada chamada da função.
+let proximaCorIndex = 0;
+
+// Mapeamento manual para garantir cores consistentes para categorias importantes.
+const MAPEAMENTO_CORES_MANUAL = {
+    "PR": "#3498db", "DIG": "#e74c3c", "DGM": "#9b59b6", "DAF": "#f1c40f", "SERAFI": "#2ecc71", "DHT/DIHIBA": "#e24678ff"
 };
-// Paleta de cores para categorias que não estão no mapa acima, para evitar erros.
-const PALETA_DE_CORES_FALLBACK = ['#24fff0ff', '#f30a5cff', '#9e2323ff', '#0d8d71ff'];
 
 // Variáveis para controlar a rotação automática de telas e a inatividade do usuário.
 let temporizadorRotacao = null;
@@ -75,11 +63,15 @@ async function iniciarDashboard() {
 
         if (todosOsDadosDesempenho) {
             todosOsDadosDesempenho = limparDadosDesempenho(todosOsDadosDesempenho);
+            const diretoriasUnicas = [...new Set(todosOsDadosDesempenho.map(item => item.Diretoria).filter(d => d))].sort();
+            gerarMapaDeCores(diretoriasUnicas);
             popularFiltrosDesempenho(todosOsDadosDesempenho);
             configurarEventListenerDesempenho();
         }
 
         if (todosOsDadosCustos) {
+            const empresasUnicas = [...new Set(todosOsDadosCustos.map(item => item.Empresa).filter(e => e))].sort();
+            gerarMapaDeCores(empresasUnicas);
             popularFiltros(todosOsDadosCustos);
             configurarEventListeners();
         }
@@ -99,10 +91,9 @@ async function iniciarDashboard() {
 }
 
 /**
- * Transforma os dados de custo do formato "largo" (meses em colunas) para o formato "longo"
- * (uma linha por empresa/mês), que o resto do dashboard espera.
+ * Transforma os dados de custo do formato "largo" para o formato "longo".
  * @param {Array<Object>} dadosLargos - Os dados brutos da nova planilha.
- * @returns {Array<Object>} - Os dados transformados no formato { Empresa, Mes, Ano, ValorGasto }.
+ * @returns {Array<Object>} - Os dados transformados.
  */
 function transformarDadosCustos(dadosLargos) {
     const dadosTransformados = [];
@@ -134,6 +125,7 @@ function transformarDadosCustos(dadosLargos) {
 
     return dadosTransformados;
 }
+
 
 // =======================================================
 // --- FUNÇÕES DE ROTAÇÃO DE TELA E DETECÇÃO DE ATIVIDADE ---
@@ -238,6 +230,22 @@ function parseNumerico(valor) {
 function formatarMoeda(valor) {
     if (typeof valor !== 'number' || isNaN(valor)) return "R$ 0,00";
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+/**
+ * Associa uma cor a cada item de uma lista de forma sequencial e sem repetição.
+ */
+function gerarMapaDeCores(listaDeItens) {
+    listaDeItens.forEach(item => {
+        if (!mapaDeCores[item]) {
+            if (MAPEAMENTO_CORES_MANUAL[item]) {
+                mapaDeCores[item] = MAPEAMENTO_CORES_MANUAL[item];
+            } else {
+                mapaDeCores[item] = PALETA_DE_CORES[proximaCorIndex % PALETA_DE_CORES.length];
+                proximaCorIndex++;
+            }
+        }
+    });
 }
 
 // --- Funções da Nova Tela de Desempenho ---
@@ -739,8 +747,8 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
     if (canvas.chart) { canvas.chart.destroy(); }
     
     const corTextoEixos = '#bdc3c7';
-    // Utiliza o mapa de cores fixo e, se uma cor não estiver lá, usa uma cor de fallback.
-    const backgroundColors = labels.map((label, index) => mapaDeCores[label] || PALETA_DE_CORES_FALLBACK[index % PALETA_DE_CORES_FALLBACK.length]);
+    // Utiliza o mapa de cores e, se a cor não estiver lá, usa a PALETA_DE_CORES como fallback.
+    const backgroundColors = labels.map((label, index) => mapaDeCores[label] || PALETA_DE_CORES[index % PALETA_DE_CORES.length]);
     
     const dataset = {
         label: labelDataset,
