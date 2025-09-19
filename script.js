@@ -3,7 +3,7 @@
 // =======================================================
 
 // URLs para as planilhas do Google Sheets que servem como fonte de dados.
-const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=620605596&single=true&output=csv';
+const URL_CUSTOS_FIXOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=609548241&single=true&output=csv';
 const URL_PAINEL_VEICULOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=1497148731&single=true&output=csv';
 const URL_DESEMPENHO_FROTA = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=1074663302&single=true&output=csv';
 const URL_CONTRATOS = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTIgjLhuc6IKTWESz4HqSVuS69u6R8qgWDJbP7AwV8lJktHM1VYH6OqurGHZtYrVFZWrX28oBEBMSfk/pub?gid=1219538623&single=true&output=csv';
@@ -16,13 +16,13 @@ let todosOsDadosVeiculos = [];
 
 // Constantes de configuração para a lógica da aplicação.
 const CAMINHO_IMAGENS = 'Imagens veiculos/';
-const REVISAO_INTERVALO_KM = 10000; // Intervalo padrão para revisão de veículos.
-const REVISAO_ALERTA_KM = 2000;   // Limite para acionar o alerta de revisão próxima.
+const REVISAO_INTERVALO_KM = 10000;
+const REVISAO_ALERTA_KM = 2000;
 const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 // Paleta de cores padrão para os gráficos.
 const PALETA_DE_CORES = ['#3498db', '#e74c3c', '#9b59b6', '#f1c40f', '#2ecc71', '#1abc9c', '#e67e22', '#d35400'];
-let mapaDeCores = {}; // Objeto para mapear categorias (empresas, diretorias) a cores.
+let mapaDeCores = {};
 
 // Mapeamento manual para garantir cores consistentes para categorias importantes.
 const MAPEAMENTO_CORES_MANUAL = {
@@ -32,7 +32,7 @@ const MAPEAMENTO_CORES_MANUAL = {
 // Variáveis para controlar a rotação automática de telas e a inatividade do usuário.
 let temporizadorRotacao = null;
 let temporizadorInatividade = null;
-const TEMPO_DE_INATIVIDADE = 10000; // 10 segundos.
+const TEMPO_DE_INATIVIDADE = 10000;
 
 // =======================================================
 // --- PONTO DE PARTIDA DA APLICAÇÃO ---
@@ -47,12 +47,18 @@ document.addEventListener('DOMContentLoaded', iniciarDashboard);
 async function iniciarDashboard() {
     try {
         // Carrega todos os dados das planilhas em paralelo para otimizar o tempo.
-        [todosOsDadosCustos, todosOsDadosVeiculos, todosOsDadosDesempenho, todosOsDadosContratos] = await Promise.all([
+        const [dadosCarregadosCustos, dadosVeiculos, dadosDesempenho, dadosContratos] = await Promise.all([
             carregarDados(URL_CUSTOS_FIXOS, 'custos'),
             carregarDados(URL_PAINEL_VEICULOS, 'veiculos'),
             carregarDados(URL_DESEMPENHO_FROTA, 'desempenho'),
             carregarDados(URL_CONTRATOS, 'contratos')
         ]);
+        
+        // Transforma os dados de custo do novo formato (largo) para o formato antigo (longo).
+        todosOsDadosCustos = transformarDadosCustos(dadosCarregadosCustos);
+        todosOsDadosVeiculos = dadosVeiculos;
+        todosOsDadosDesempenho = dadosDesempenho;
+        todosOsDadosContratos = dadosContratos;
 
         // Processa e prepara os dados de desempenho da frota se eles foram carregados.
         if (todosOsDadosDesempenho) {
@@ -88,6 +94,43 @@ async function iniciarDashboard() {
     }
 }
 
+/**
+ * Transforma os dados de custo do formato "largo" (meses em colunas) para o formato "longo"
+ * (uma linha por empresa/mês), que o resto do dashboard espera.
+ * @param {Array<Object>} dadosLargos - Os dados brutos da nova planilha.
+ * @returns {Array<Object>} - Os dados transformados no formato { Empresa, Mes, Ano, ValorGasto }.
+ */
+function transformarDadosCustos(dadosLargos) {
+    const dadosTransformados = [];
+    const anoAtual = new Date().getFullYear(); 
+
+    const mapaMeses = {
+        "JAN": "Janeiro", "FEV": "Fevereiro", "MAR": "Março", "ABR": "Abril", 
+        "MAI": "Maio", "JUN": "Junho", "JUL": "Julho", "AGO": "Agosto", 
+        "SET": "Setembro", "OUT": "Outubro", "NOV": "Novembro", "DEZ": "Dezembro"
+    };
+
+    dadosLargos.forEach(linha => {
+        const nomeEmpresa = linha.EMPRESA;
+        if (!nomeEmpresa) return;
+
+        for (const chaveMes in mapaMeses) {
+            if (linha.hasOwnProperty(chaveMes)) {
+                const valorGasto = parseNumerico(linha[chaveMes]);
+                
+                dadosTransformados.push({
+                    Empresa: nomeEmpresa.trim(),
+                    Mes: mapaMeses[chaveMes],
+                    Ano: anoAtual,
+                    ValorGasto: valorGasto
+                });
+            }
+        }
+    });
+
+    return dadosTransformados;
+}
+
 // =======================================================
 // --- FUNÇÕES DE ROTAÇÃO DE TELA E DETECÇÃO DE ATIVIDADE ---
 // =======================================================
@@ -98,10 +141,9 @@ async function iniciarDashboard() {
  */
 function iniciarRotacao(intervalo) {
     const telas = document.querySelectorAll('.dashboard-tela');
-    if (telas.length <= 1) return; // Não rotaciona se houver apenas uma tela.
+    if (telas.length <= 1) return;
     let telaAtual = 0;
     
-    // Função interna para atualizar o conteúdo da tela ativa no momento da transição.
     const executarAtualizacoes = () => {
         const telaAtiva = telas[telaAtual];
         
@@ -116,9 +158,8 @@ function iniciarRotacao(intervalo) {
         }
     };
 
-    executarAtualizacoes(); // Executa a primeira atualização.
+    executarAtualizacoes();
 
-    // Define um intervalo para alternar as classes 'ativo' e atualizar as telas.
     temporizadorRotacao = setInterval(() => {
         telas[telaAtual].classList.remove('ativo');
         telaAtual = (telaAtual + 1) % telas.length;
@@ -183,7 +224,7 @@ async function carregarDados(url, nomeDados) {
 function parseNumerico(valor) {
     if (typeof valor === 'number') return valor;
     if (typeof valor !== 'string' || !valor.trim()) return 0;
-    const valorStr = String(valor).trim().replace('R$', '').trim();
+    const valorStr = String(valor).trim().replace('R$', '').replace('$', '').trim();
     let valorFinal;
     if (valorStr.includes(',')) {
         valorFinal = valorStr.replace(/\./g, '').replace(',', '.');
@@ -280,14 +321,12 @@ function configurarEventListenerDesempenho() {
 }
 
 function atualizarPainelDesempenho() {
-    // --- 1. LER OS FILTROS ---
     const mesSelecionado = document.getElementById('filtro-mes-desempenho').value;
     const diretoriaSelecionada = document.getElementById('filtro-diretoria-desempenho').value;
     const veiculoSelecionado = document.getElementById('filtro-veiculo-desempenho').value;
     const motoristaSelecionado = document.getElementById('filtro-motorista-desempenho').value;
     const combustivelSelecionado = document.getElementById('filtro-combustivel-desempenho').value;
 
-    // --- 2. FILTRAR OS DADOS ---
     let dadosFiltrados = todosOsDadosDesempenho.filter(item => {
         if (!item['Data/Hora']) return false;
         const mesDoItem = MESES_ORDENADOS[new Date(item['Data/Hora'].split(' ')[0].split('/').reverse().join('-')).getMonth()];
@@ -299,7 +338,6 @@ function atualizarPainelDesempenho() {
         return correspondeMes && correspondeDiretoria && correspondeVeiculo && correspondeMotorista && correspondeCombustivel;
     });
 
-    // --- 3. ATUALIZAR CARDS DE KPI GERAIS ---
     const custoTotal = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Custo total de combustível']), 0);
     const totalKm = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Quilometragem']), 0);
     const totalLitros = dadosFiltrados.reduce((soma, item) => soma + parseNumerico(item['Total de litros']), 0);
@@ -311,18 +349,15 @@ function atualizarPainelDesempenho() {
     document.getElementById('desempenho-custo-litro').textContent = formatarMoeda(custoMedioLitro);
     document.getElementById('desempenho-eficiencia-media').textContent = `${eficienciaMedia.toFixed(1)} Km/L`;
 
-    // --- 4. LÓGICA DINÂMICA PARA OS GRÁFICOS ---
     const tituloEsquerda = document.getElementById('titulo-desempenho-esquerda');
     const tituloDireita = document.getElementById('titulo-desempenho-direita');
     const containerDireita = document.getElementById('container-desempenho-direita');
 
-    // --- CASO 3: UM VEÍCULO ESPECÍFICO FOI SELECIONADO ---
     if (veiculoSelecionado !== 'Todos') {
         tituloEsquerda.textContent = `Evolução Mensal de Custos - ${veiculoSelecionado}`;
         tituloDireita.textContent = `Médias Gerais - ${veiculoSelecionado}`;
         
         const dadosDoVeiculoNoAno = todosOsDadosDesempenho.filter(item => item['Veículo'] === veiculoSelecionado);
-
         const gastosMensais = Array(12).fill(0);
         dadosDoVeiculoNoAno.forEach(item => {
             if(item['Data/Hora']) {
@@ -332,7 +367,6 @@ function atualizarPainelDesempenho() {
                 }
             }
         });
-
         const pointColors = Array(12).fill('#3498db');
         if (mesSelecionado !== 'Todos') {
             const indiceMesSelecionado = MESES_ORDENADOS.indexOf(mesSelecionado);
@@ -340,23 +374,18 @@ function atualizarPainelDesempenho() {
                 pointColors[indiceMesSelecionado] = '#e74c3c';
             }
         }
-
         renderizarGrafico('grafico-desempenho-esquerda', 'line', MESES_ORDENADOS, gastosMensais, 'Custo Mensal', pointColors);
 
         const numeroAbastecimentos = dadosFiltrados.length;
         const custoMedioAbastecimento = numeroAbastecimentos > 0 ? custoTotal / numeroAbastecimentos : 0;
         const litrosMedioAbastecimento = numeroAbastecimentos > 0 ? totalLitros / numeroAbastecimentos : 0;
         
-        // --- CORREÇÃO APLICADA AQUI ---
-        // Voltamos a usar a classe "kpi-container-vertical", que agora possui o estilo correto no CSS.
         containerDireita.innerHTML = `
             <div class="kpi-container-vertical">
                 <div class="kpi-card"><h5>Eficiência Média (Km/L)</h5><p>${eficienciaMedia.toFixed(1)}</p></div>
                 <div class="kpi-card"><h5>Custo Médio / Abastecimento</h5><p>${formatarMoeda(custoMedioAbastecimento)}</p></div>
                 <div class="kpi-card"><h5>Litros / Abastecimento</h5><p>${litrosMedioAbastecimento.toFixed(1)}</p></div>
             </div>`;
-    
-    // --- CASO 2: UMA DIRETORIA ESPECÍFICA FOI SELECIONADA ---
     } else if (diretoriaSelecionada !== 'Todos') {
         tituloEsquerda.textContent = `Gasto por Veículo - ${diretoriaSelecionada}`;
         tituloDireita.textContent = `Custo por Litro - ${diretoriaSelecionada}`;
@@ -384,8 +413,6 @@ function atualizarPainelDesempenho() {
             custoLitro: dados.litrosTotal > 0 ? dados.custoTotal / dados.litrosTotal : 0
         })).sort((a, b) => b.custoLitro - a.custoLitro);
         renderizarGrafico('grafico-desempenho-direita', 'bar', custoLitroPorVeiculo.map(d => d.veiculo), custoLitroPorVeiculo.map(d => d.custoLitro), 'Custo por Litro');
-
-    // --- CASO 1: VISÃO GERAL ---
     } else {
         tituloEsquerda.textContent = 'Gasto por Diretoria';
         tituloDireita.textContent = 'Custo por Litro por Veículo';
@@ -415,6 +442,7 @@ function atualizarPainelDesempenho() {
         renderizarGrafico('grafico-desempenho-direita', 'bar', custoLitroPorVeiculo.map(d => d.veiculo), custoLitroPorVeiculo.map(d => d.custoLitro), 'Custo por Litro');
     }
 }
+
 // --- Funções da Tela de Custos Fixos ---
 
 function popularFiltros(dados) {
@@ -467,15 +495,8 @@ function atualizarDashboard(dados, filtros) {
     }
     
     const custoAnualTotal = dadosAnoInteiro.reduce((soma, item) => soma + parseNumerico(item.ValorGasto), 0);
-    
-    // --- CORREÇÃO DO BUG APLICADA AQUI ---
-    // 1. Filtra apenas os dados que têm um valor de gasto maior que zero.
-    const dadosComGastos = dadosAnoInteiro.filter(d => parseNumerico(d.ValorGasto) > 0);
-    // 2. Cria um conjunto (Set) para obter apenas os nomes dos meses únicos que tiveram gastos.
-    const mesesComGastos = [...new Set(dadosComGastos.map(d => d.Mes))];
-    // 3. Conta quantos meses únicos existem. Se for 0, usa 1 para evitar divisão por zero.
+    const mesesComGastos = [...new Set(dadosAnoInteiro.filter(d => parseNumerico(d.ValorGasto) > 0).map(d => d.Mes))];
     const numeroDeMesesComGastos = mesesComGastos.length > 0 ? mesesComGastos.length : 1;
-    // 4. Calcula a média correta.
     const custoMedioMensal = custoAnualTotal / numeroDeMesesComGastos;
     
     const custoSelecaoAtual = dadosParaVisao.reduce((soma, item) => soma + parseNumerico(item.ValorGasto), 0);
@@ -596,10 +617,10 @@ function renderizarPainelFrota(dadosVeiculos) {
 
             const itemProcesso = document.getElementById('item-processo');
             const processoSpan = document.getElementById('detalhe-processo');
-            const processoUrl = veiculo.Processo_URL; // Lê a nova coluna
+            const processoUrl = veiculo.Processo_URL;
 
             if (processoUrl && processoUrl.trim() !== '') {
-                itemProcesso.style.display = 'flex'; // 'flex' para alinhar com os outros itens
+                itemProcesso.style.display = 'flex';
                 processoSpan.innerHTML = `<a href="${processoUrl}" target="_blank">Acessar Processo</a>`;
             } else {
                 itemProcesso.style.display = 'none';
@@ -631,8 +652,8 @@ function renderizarPainelContratos(dadosContratos) {
     contratosValidos.forEach(contrato => {
         const empresa = contrato['EMPRESA CONTRATADA'];
         const vigenciaTexto = contrato['VIGËNCIA'];
-        const nomeImagem = contrato['IMAGEM_URL'];
-
+        const nomeImagem = contrato.IMAGEM_URL; 
+        
         const dataFimTexto = vigenciaTexto.split(' a ')[1];
         if (!dataFimTexto) return;
 
@@ -659,41 +680,36 @@ function renderizarPainelContratos(dadosContratos) {
         `;
 
         card.addEventListener('click', () => {
-            // Preenche os dados de texto
             document.getElementById('detalhe-contrato-empresa').textContent = empresa;
-            document.getElementById('detalhe-contrato-gestor').textContent = contrato['GESTOR'] || '---';
-            document.getElementById('detalhe-contrato-fiscal').textContent = contrato['FISCAL'] || '---';
-            document.getElementById('detalhe-contrato-suplente').textContent = contrato['SUPLENTE'] || '---';
-            document.getElementById('detalhe-contrato-cnpj').textContent = contrato['CNPJ'] || '---';
-            document.getElementById('detalhe-contrato-vigencia').textContent = contrato['VIGËNCIA'] || '---';
-            document.getElementById('detalhe-contrato-repactuacao1').textContent = contrato['REPACTUAÇÃO 1'] || '---';
-            document.getElementById('detalhe-contrato-repactuacao2').textContent = contrato['REPACTUAÇÃO 2'] || '---';
-            document.getElementById('detalhe-contrato-responsavel').textContent = contrato['RESPONSÁVEL CONTRATADA'] || '---';
-            document.getElementById('detalhe-contrato-email').textContent = contrato['EMAIL'] || '---';
-            document.getElementById('detalhe-contrato-telefone').textContent = contrato['TELEFONE'] || '---';
-
-            // --- LÓGICA FINAL E CORRIGIDA PARA OS LINKS ---
-            // Função que lê a coluna, verifica se é um link e monta o campo
+            document.getElementById('detalhe-contrato-gestor').textContent = contrato.GESTOR || '---';
+            document.getElementById('detalhe-contrato-fiscal').textContent = contrato.FISCAL || '---';
+            document.getElementById('detalhe-contrato-suplente').textContent = contrato.SUPLENTE || '---';
+            document.getElementById('detalhe-contrato-cnpj').textContent = contrato.CNPJ || '---';
+            
             const configurarLink = (spanId, nomeColuna) => {
                 const spanElement = document.getElementById(spanId);
                 const url = contrato[nomeColuna];
 
                 if (spanElement) {
-                    // Verifica se a url existe, não está vazia e começa com http
                     if (url && url.trim().startsWith('http')) {
                         spanElement.innerHTML = `<a href="${url}" target="_blank">Ver Processo SEI</a>`;
                     } else {
-                        // Se não houver URL válida na coluna, mostra "---"
-                        spanElement.textContent = '---';
+                        spanElement.textContent = url || '---';
                     }
                 }
             };
-
-            // Chama a função para cada campo de processo, usando o nome exato da coluna da planilha
-            configurarLink('detalhe-contrato-processo-raiz', 'PROCESSO RAIZ'); // Coluna E
-            configurarLink('detalhe-contrato-processo-fiscalizacao', 'FISCALIZAÇÃO'); // Coluna F
-            configurarLink('detalhe-contrato-prorrogacao1', 'PRORROGAÇÃO 1'); // Coluna M
-            configurarLink('detalhe-contrato-prorrogacao2', 'PRORROGAÇÃO 2'); // Coluna N
+            
+            configurarLink('detalhe-contrato-processo-raiz', 'PROCESSO RAIZ');
+            configurarLink('detalhe-contrato-processo-fiscalizacao', 'FISCALIZAÇÃO');
+            configurarLink('detalhe-contrato-prorrogacao1', 'PRORROGAÇÃO 1');
+            configurarLink('detalhe-contrato-prorrogacao2', 'PRORROGAÇÃO 2');
+            
+            document.getElementById('detalhe-contrato-vigencia').textContent = contrato['VIGËNCIA'] || '---';
+            document.getElementById('detalhe-contrato-repactuacao1').textContent = contrato['REPACTUAÇÃO 1'] || '---';
+            document.getElementById('detalhe-contrato-repactuacao2').textContent = contrato['REPACTUAÇÃO 2'] || '---';
+            document.getElementById('detalhe-contrato-responsavel').textContent = contrato['RESPONSÁVEL CONTRATADA'] || '---';
+            document.getElementById('detalhe-contrato-email').textContent = contrato.EMAIL || '---';
+            document.getElementById('detalhe-contrato-telefone').textContent = contrato.TELEFONE || '---';
 
             document.getElementById('contrato-detalhes').classList.add('visivel');
         });
@@ -704,26 +720,15 @@ function renderizarPainelContratos(dadosContratos) {
         document.getElementById('contrato-detalhes').classList.remove('visivel');
     });
 }
-
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
 // =======================================================
 
-/**
- * Renderiza um gráfico usando a biblioteca Chart.js em um elemento canvas.
- * @param {string} canvasId - O ID do elemento canvas.
- * @param {string} tipo - O tipo de gráfico (ex: 'bar', 'pie', 'line').
- * @param {Array<string>} labels - Os rótulos para o eixo X ou para as fatias da pizza.
- * @param {Array<number>} data - Os dados numéricos para o gráfico.
- * @param {string} labelDataset - O rótulo para o conjunto de dados.
- * @param {Array<string>} [pointColors=null] - (Opcional) Cores específicas para pontos em gráficos de linha.
- */
 function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColors = null) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) { return; }
     const ctx = canvas.getContext('2d');
     
-    // Destrói qualquer instância de gráfico anterior no mesmo canvas para evitar sobreposição.
     if (canvas.chart) { canvas.chart.destroy(); }
     
     const corTextoEixos = '#bdc3c7';
@@ -738,7 +743,6 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
         fill: tipo === 'line'
     };
 
-    // Aplica cores customizadas para pontos se for um gráfico de linha e as cores forem fornecidas.
     if (tipo === 'line' && pointColors) {
         dataset.pointBackgroundColor = pointColors;
         dataset.pointRadius = 5;
@@ -779,7 +783,6 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
         } : {}
     };
 
-    // Cria a nova instância do gráfico.
     canvas.chart = new Chart(ctx, {
         type: tipo,
         data: {
