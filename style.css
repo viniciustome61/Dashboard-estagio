@@ -286,14 +286,13 @@ body {
     height: 100%;
 }
 
-/* --- ESTILO CORRIGIDO E ADICIONADO --- */
 .kpi-container-vertical {
     display: flex;
     flex-direction: column;
-    justify-content: space-around; /* Distribui os cards verticalmente */
+    justify-content: space-around;
     gap: 15px;
     width: 100%;
-    height: 100%; /* Garante que o container ocupe toda a altura */
+    height: 100%;
 }
 
 .kpi-card {
@@ -314,60 +313,10 @@ body {
     color: #ffffff;
 }
 
+
 /* --- ESTILOS DA TELA DE CONTRATOS --- */
-.contratos-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(2, 1fr);
-    gap: 20px;
-    height: 100%;
-}
-.contrato-card {
-    background-color: #34495e;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-.contrato-card img {
-    width: 100%;
-    height: 70%;
-    object-fit: contain;
-    padding: 10px;
-    flex-grow: 1;
-    background-color: white;
-    border-radius: 5px;
-}
-.contrato-card h5 {
-    background-color: rgba(44, 62, 80, 0.7);
-    padding: 10px;
-    margin: 0;
-    text-align: center;
-    font-size: 1.1em;
-    flex-shrink: 0;
-}
-.contrato-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0,0,0,0.3);
-}
-.contrato-status {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid #2c3e50;
-}
-.contrato-ok .contrato-status { background-color: #2ecc71; }
-.contrato-alerta .contrato-status { background-color: #f1c40f; }
-.contrato-vencido .contrato-status {
-    background-color: #e74c3c;
-    animation: piscar 1.5s infinite;
-}
+
+/* Modal de Detalhes do Contrato */
 .contrato-detalhes {
     position: fixed;
     top: 50%;
@@ -423,7 +372,7 @@ body {
 }
 .contrato-detalhes a:hover { color: #FFF; }
 
-/* --- NOVOS ESTILOS PARA A TELA DE CONTRATOS COM SLIDER --- */
+/* Layout e Slider da Tela de Contratos */
 .conteudo-tela-contratos {
     display: flex;
     flex-direction: column;
@@ -436,7 +385,7 @@ body {
 .slider-container {
     width: 80%;
     max-width: 900px;
-    height: 65%; /* Reduzido para dar espaço ao dropdown */
+    height: 65%;
     margin: 0 auto;
     overflow: hidden;
     position: relative;
@@ -479,6 +428,7 @@ body {
     color: #ecf0f1;
 }
 
+/* Navegação do Slider (bolinhas) */
 .slider-nav {
     display: flex;
     justify-content: center;
@@ -500,13 +450,19 @@ body {
     transform: scale(1.2);
 }
 
-/* Reutiliza o estilo do status do contrato no slide */
-.contrato-slide .contrato-status {
+/* Indicador de Status do Contrato no Slide */
+.contrato-status {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 25px;
-    height: 25px;
-    border: 3px solid #34495e;
+    top: 10px;
+    right: 10px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #2c3e50;
 }
-
+.contrato-ok .contrato-status { background-color: #2ecc71; }
+.contrato-alerta .contrato-status { background-color: #f1c40f; }
+.contrato-vencido .contrato-status {
+    background-color: #e74c3c;
+    animation: piscar 1.5s infinite;
+}
