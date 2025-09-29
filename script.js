@@ -16,6 +16,7 @@ let todosOsDadosVeiculos = [];
 
 // Constantes de configuração para a lógica da aplicação.
 const CAMINHO_IMAGENS = 'Imagens veiculos/';
+const CAMINHO_IMAGENS_EMPRESAS = 'Imagens Empresas/';
 const REVISAO_INTERVALO_KM = 10000;
 const REVISAO_ALERTA_KM = 2000;
 const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
@@ -645,10 +646,10 @@ function renderizarPainelFrota(dadosVeiculos) {
      });
 }
 
-// --- Funções da Tela de Contratos ---
+// --- Funções da Tela de Contratos (ATUALIZADA) ---
 
 /**
- * Renderiza os cards de contratos na tela de Controle de Contratos.
+ * Renderiza o slider de contratos na tela correspondente.
  */
 function renderizarPainelContratos(dadosContratos) {
     const track = document.getElementById('contratos-slider-track');
@@ -659,18 +660,16 @@ function renderizarPainelContratos(dadosContratos) {
     track.innerHTML = '';
     nav.innerHTML = '';
     
+    // Limpa o timer do slider anterior, se existir
     if (window.sliderTimer) {
         clearInterval(window.sliderTimer);
     }
 
-    const hoje = new Date();
-    const dataAlerta = new Date();
-    dataAlerta.setMonth(hoje.getMonth() + 3);
-
     const contratosValidos = dadosContratos.filter(c => c['EMPRESA CONTRATADA'] && c['VIGËNCIA']);
+    if (contratosValidos.length === 0) return;
 
     // Popula o dropdown de seleção
-    filtroEmpresa.innerHTML = ''; // Limpa antes de popular
+    filtroEmpresa.innerHTML = ''; 
     contratosValidos.forEach((contrato, index) => {
         const option = document.createElement('option');
         option.value = index;
@@ -683,15 +682,20 @@ function renderizarPainelContratos(dadosContratos) {
         const vigenciaTexto = contrato['VIGËNCIA'];
         const nomeImagem = contrato.IMAGEM_URL;
         
+        // --- Lógica para status do contrato ---
         let statusClasse = 'contrato-ok';
         let statusTexto = 'Em vigor';
+        const dataFimTexto = vigenciaTexto ? vigenciaTexto.split(' a ')[1] : null;
 
-        const dataFimTexto = vigenciaTexto.split(' a ')[1];
         if (dataFimTexto) {
             const [dia, mes, ano] = dataFimTexto.split('/');
             const dataFim = new Date(ano, mes - 1, dia);
+            const hoje = new Date();
+            const dataAlerta = new Date();
+            dataAlerta.setMonth(hoje.getMonth() + 3);
+
             if (dataFim < hoje) {
-                statusClasse = 'contrato-vencido piscando';
+                statusClasse = 'contrato-vencido';
                 statusTexto = 'Vencido';
             } else if (dataFim <= dataAlerta) {
                 statusClasse = 'contrato-alerta';
@@ -699,40 +703,76 @@ function renderizarPainelContratos(dadosContratos) {
             }
         }
 
+        // --- Criação do Slide ---
         const slide = document.createElement('div');
         slide.className = 'contrato-slide';
         slide.innerHTML = `
-            <div class="contrato-status ${statusClasse.replace('piscando', '').trim()}" title="${statusTexto}"></div>
-            <img src="Imagens Empresas/${nomeImagem}" onerror="this.onerror=null; this.src='Imagens veiculos/placeholder.png';" alt="${empresa}">
+            <div class="contrato-status ${statusClasse}" title="${statusTexto}"></div>
+            <img src="${CAMINHO_IMAGENS_EMPRESAS}${nomeImagem}" onerror="this.onerror=null; this.src='${CAMINHO_IMAGENS}placeholder.png';" alt="${empresa}">
             <h5>${empresa}</h5>
         `;
         track.appendChild(slide);
 
+        // --- Evento de clique para mostrar detalhes ---
+        slide.addEventListener('click', () => {
+            const modal = document.getElementById('contrato-detalhes');
+            
+            // Função auxiliar para preencher os campos
+            const preencherDetalhe = (id, valor) => {
+                const elemento = document.getElementById(id);
+                if (elemento) {
+                    elemento.textContent = valor || 'Não informado';
+                }
+            };
+
+            preencherDetalhe('detalhe-contrato-nome-empresa', contrato['EMPRESA CONTRATADA']);
+            preencherDetalhe('detalhe-contrato-gestor', contrato.GESTOR);
+            preencherDetalhe('detalhe-contrato-fiscal', contrato.FISCAL);
+            preencherDetalhe('detalhe-contrato-suplente', contrato.SUPLENTE);
+            preencherDetalhe('detalhe-contrato-cnpj', contrato.CNPJ);
+            preencherDetalhe('detalhe-contrato-vigencia', contrato['VIGËNCIA']);
+            preencherDetalhe('detalhe-contrato-prorrogacao1', contrato['1ªPRORROGAÇÃO']);
+            preencherDetalhe('detalhe-contrato-prorrogacao2', contrato['2ªPRORROGAÇÃO']);
+            preencherDetalhe('detalhe-contrato-repactuacao1', contrato['1ªREPACTUAÇÃO']);
+            preencherDetalhe('detalhe-contrato-repactuacao2', contrato['2ªREPACTUAÇÃO']);
+            preencherDetalhe('detalhe-contrato-responsavel', contrato['RESPONSÁVEL']);
+            preencherDetalhe('detalhe-contrato-email', contrato.EMAIL);
+            preencherDetalhe('detalhe-contrato-telefone', contrato.TELEFONE);
+            
+            // Lógica para o link do processo SEI
+            const itemProcesso = document.getElementById('item-contrato-processo');
+            const spanProcesso = document.getElementById('detalhe-contrato-processo');
+            if (contrato.PROCESSO_URL && contrato.PROCESSO_URL.trim() !== '') {
+                spanProcesso.innerHTML = `<a href="${contrato.PROCESSO_URL}" target="_blank">Acessar Processo</a>`;
+                itemProcesso.style.display = 'list-item';
+            } else {
+                spanProcesso.innerHTML = 'Não informado';
+                itemProcesso.style.display = 'list-item'; 
+            }
+
+            modal.classList.add('visivel');
+        });
+
+        // --- Criação do Ponto de Navegação ---
         const dot = document.createElement('div');
         dot.className = 'dot';
         dot.addEventListener('click', () => goToSlide(index));
         nav.appendChild(dot);
-        
-        slide.addEventListener('click', () => {
-            document.getElementById('detalhe-contrato-contrato').textContent = empresa.EMPRESACONTRATADA;
-            document.getElementById('detalhe-contrato')
-            document.getElementById('contrato-detalhes').classList.add('visivel');
-        });
     });
     
+    // --- Lógica de Controle do Slider ---
     let slideAtual = 0;
     const slides = document.querySelectorAll('.contrato-slide');
     const dots = document.querySelectorAll('.slider-nav .dot');
-    const tempoTotalTela = 120000; // 2 minutos
+    const tempoTotalTela = 120000;
     const intervaloSlide = slides.length > 0 ? tempoTotalTela / slides.length : tempoTotalTela;
 
     function goToSlide(n) {
-        if (!slides.length || !dots.length) return;
         slideAtual = (n + slides.length) % slides.length;
         track.style.transform = `translateX(-${slideAtual * 100}%)`;
         dots.forEach(dot => dot.classList.remove('ativo'));
         dots[slideAtual].classList.add('ativo');
-        filtroEmpresa.value = slideAtual; // Sincroniza o dropdown
+        filtroEmpresa.value = slideAtual;
         reiniciarTimerSlider();
     }
 
@@ -749,12 +789,13 @@ function renderizarPainelContratos(dadosContratos) {
         goToSlide(parseInt(filtroEmpresa.value, 10));
     });
 
-    goToSlide(0);
-
     document.getElementById('fechar-detalhes-contrato').addEventListener('click', () => {
         document.getElementById('contrato-detalhes').classList.remove('visivel');
     });
+
+    goToSlide(0);
 }
+
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
 // =======================================================
@@ -770,7 +811,6 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
     if (canvas.chart) { canvas.chart.destroy(); }
     
     const corTextoEixos = '#bdc3c7';
-    // Utiliza o mapa de cores e, se a cor não estiver lá, usa a PALETA_DE_CORES como fallback.
     const backgroundColors = labels.map((label, index) => mapaDeCores[label] || PALETA_DE_CORES[index % PALETA_DE_CORES.length]);
     
     const dataset = {
