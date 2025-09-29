@@ -76,7 +76,7 @@ async function iniciarDashboard() {
             configurarEventListeners();
         }
         
-        iniciarRotacao(10000); 
+        iniciarRotacao(10000); // 10 segundos
         configurarSensorDeAtividade();
     } catch (erro) {
         console.error("Erro fatal ao iniciar o dashboard:", erro);
@@ -653,13 +653,12 @@ function renderizarPainelFrota(dadosVeiculos) {
 function renderizarPainelContratos(dadosContratos) {
     const track = document.getElementById('contratos-slider-track');
     const nav = document.getElementById('contratos-slider-nav');
-    if (!track || !nav) return;
+    const filtroEmpresa = document.getElementById('filtro-contrato-empresa');
+    if (!track || !nav || !filtroEmpresa) return;
 
-    // Limpa o conteúdo anterior
     track.innerHTML = '';
     nav.innerHTML = '';
     
-    // Limpa qualquer timer de slider anterior para evitar múltiplos loops
     if (window.sliderTimer) {
         clearInterval(window.sliderTimer);
     }
@@ -669,6 +668,15 @@ function renderizarPainelContratos(dadosContratos) {
     dataAlerta.setMonth(hoje.getMonth() + 3);
 
     const contratosValidos = dadosContratos.filter(c => c['EMPRESA CONTRATADA'] && c['VIGËNCIA']);
+
+    // Popula o dropdown de seleção
+    filtroEmpresa.innerHTML = ''; // Limpa antes de popular
+    contratosValidos.forEach((contrato, index) => {
+        const option = document.createElement('option');
+        option.value = index;
+        option.textContent = contrato['EMPRESA CONTRATADA'];
+        filtroEmpresa.appendChild(option);
+    });
 
     contratosValidos.forEach((contrato, index) => {
         const empresa = contrato['EMPRESA CONTRATADA'];
@@ -691,29 +699,23 @@ function renderizarPainelContratos(dadosContratos) {
             }
         }
 
-        // Cria o slide
         const slide = document.createElement('div');
         slide.className = 'contrato-slide';
         slide.innerHTML = `
-            <div class="contrato-status ${statusClasse}" title="${statusTexto}"></div>
+            <div class="contrato-status ${statusClasse.replace('piscando', '').trim()}" title="${statusTexto}"></div>
             <img src="Imagens Empresas/${nomeImagem}" onerror="this.onerror=null; this.src='Imagens veiculos/placeholder.png';" alt="${empresa}">
             <h5>${empresa}</h5>
         `;
         track.appendChild(slide);
 
-        // Cria o ponto de navegação
         const dot = document.createElement('div');
         dot.className = 'dot';
-        dot.addEventListener('click', () => {
-            goToSlide(index);
-            reiniciarTimerSlider();
-        });
+        dot.addEventListener('click', () => goToSlide(index));
         nav.appendChild(dot);
         
-        // Adiciona evento de clique para abrir detalhes
         slide.addEventListener('click', () => {
-            document.getElementById('detalhe-contrato-empresa').textContent = empresa;
-            // (Coloque aqui toda a lógica de preenchimento dos detalhes que já tínhamos)
+            document.getElementById('detalhe-contrato-contrato').textContent = empresa.EMPRESACONTRATADA;
+            document.getElementById('detalhe-contrato')
             document.getElementById('contrato-detalhes').classList.add('visivel');
         });
     });
@@ -721,6 +723,8 @@ function renderizarPainelContratos(dadosContratos) {
     let slideAtual = 0;
     const slides = document.querySelectorAll('.contrato-slide');
     const dots = document.querySelectorAll('.slider-nav .dot');
+    const tempoTotalTela = 120000; // 2 minutos
+    const intervaloSlide = slides.length > 0 ? tempoTotalTela / slides.length : tempoTotalTela;
 
     function goToSlide(n) {
         if (!slides.length || !dots.length) return;
@@ -728,6 +732,8 @@ function renderizarPainelContratos(dadosContratos) {
         track.style.transform = `translateX(-${slideAtual * 100}%)`;
         dots.forEach(dot => dot.classList.remove('ativo'));
         dots[slideAtual].classList.add('ativo');
+        filtroEmpresa.value = slideAtual; // Sincroniza o dropdown
+        reiniciarTimerSlider();
     }
 
     function proximoSlide() {
@@ -736,11 +742,14 @@ function renderizarPainelContratos(dadosContratos) {
 
     function reiniciarTimerSlider() {
         clearInterval(window.sliderTimer);
-        window.sliderTimer = setInterval(proximoSlide, 5000); // Muda de slide a cada 5 segundos
+        window.sliderTimer = setInterval(proximoSlide, intervaloSlide);
     }
 
-    goToSlide(0); // Inicia no primeiro slide
-    reiniciarTimerSlider(); // Inicia o autoplay
+    filtroEmpresa.addEventListener('change', () => {
+        goToSlide(parseInt(filtroEmpresa.value, 10));
+    });
+
+    goToSlide(0);
 
     document.getElementById('fechar-detalhes-contrato').addEventListener('click', () => {
         document.getElementById('contrato-detalhes').classList.remove('visivel');
