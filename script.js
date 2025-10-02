@@ -21,11 +21,9 @@ const REVISAO_INTERVALO_KM = 10000;
 const REVISAO_ALERTA_KM = 2000;
 const MESES_ORDENADOS = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-// Paleta de cores padrão para os gráficos.
+// Paleta de cores padrão para os gráficos (ATUALIZADA)
 const PALETA_DE_CORES = ['#55efc4', '#81ecec', '#74b9ff', '#a29bfe', '#dfe6e9', '#00cec9', '#0984e3', '#6c5ce7', '#ffeaa7', '#fab1a0', '#ff7675', '#fd79a8', '#fdcb6e', '#e17055', '#d63031', '#e84393'];
 let mapaDeCores = {};
-
-// O contador de cores agora é global, para não ser reiniciado a cada chamada da função.
 let proximaCorIndex = 0;
 
 // Mapeamento manual para garantir cores consistentes para categorias importantes.
@@ -42,10 +40,6 @@ const TEMPO_DE_INATIVIDADE = 10000;
 // --- PONTO DE PARTIDA DA APLICAÇÃO ---
 // =======================================================
 
-/**
- * Função principal que é executada quando o DOM está totalmente carregado.
- * Responsável por orquestrar o carregamento de todos os dados e a inicialização dos painéis.
- */
 document.addEventListener('DOMContentLoaded', iniciarDashboard);
 
 async function iniciarDashboard() {
@@ -77,25 +71,17 @@ async function iniciarDashboard() {
             configurarEventListeners();
         }
         
-        iniciarRotacao(10000); // 10 segundos
+        iniciarRotacao(10000);
         configurarSensorDeAtividade();
     } catch (erro) {
         console.error("Erro fatal ao iniciar o dashboard:", erro);
         const app = document.getElementById('app');
         if (app) {
-            app.innerHTML = `<div class="mensagem-erro">
-                <h1>Erro ao carregar os dados</h1>
-                <p>Não foi possível carregar os dados das planilhas. Verifique o console (F12) para mais detalhes.</p>
-            </div>`;
+            app.innerHTML = `<div class="mensagem-erro"><h1>Erro ao carregar os dados</h1><p>Não foi possível carregar os dados. Verifique o console para mais detalhes.</p></div>`;
         }
     }
 }
 
-/**
- * Transforma os dados de custo do formato "largo" para o formato "longo".
- * @param {Array<Object>} dadosLargos - Os dados brutos da nova planilha.
- * @returns {Array<Object>} - Os dados transformados.
- */
 function transformarDadosCustos(dadosLargos) {
     const dadosTransformados = [];
     const anoAtual = new Date().getFullYear(); 
@@ -132,10 +118,6 @@ function transformarDadosCustos(dadosLargos) {
 // --- FUNÇÕES DE ROTAÇÃO DE TELA E DETECÇÃO DE ATIVIDADE ---
 // =======================================================
 
-/**
- * Inicia a transição automática entre as diferentes telas do dashboard.
- * @param {number} intervalo - O tempo em milissegundos para alternar entre as telas.
- */
 function iniciarRotacao(intervalo) {
     const telas = document.querySelectorAll('.dashboard-tela');
     if (telas.length <= 1) return;
@@ -165,9 +147,6 @@ function iniciarRotacao(intervalo) {
     }, intervalo);
 }
 
-/**
- * Pausa a rotação automática de telas quando detecta atividade do usuário.
- */
 function reiniciarTimerDeInatividade() {
     clearInterval(temporizadorRotacao);
     clearTimeout(temporizadorInatividade);
@@ -176,9 +155,6 @@ function reiniciarTimerDeInatividade() {
     }, TEMPO_DE_INATIVIDADE);
 }
 
-/**
- * Adiciona um event listener para detectar movimentos do mouse e reiniciar o timer de inatividade.
- */
 function configurarSensorDeAtividade() {
     window.addEventListener('mousemove', reiniciarTimerDeInatividade);
 }
@@ -187,9 +163,6 @@ function configurarSensorDeAtividade() {
 // --- FUNÇÕES DE LÓGICA E UTILITÁRIOS --- 
 // =======================================================
 
-/**
- * Carrega dados de uma URL (planilha CSV) e os converte para JSON.
- */
 async function carregarDados(url, nomeDados) {
     if (!url || !url.startsWith('https')) {
         throw new Error(`URL inválida ou ausente para ${nomeDados}`);
@@ -208,9 +181,6 @@ async function carregarDados(url, nomeDados) {
     }
 }
 
-/**
- * Converte uma string (potencialmente formatada como moeda) em um número.
- */
 function parseNumerico(valor) {
     if (typeof valor === 'number') return valor;
     if (typeof valor !== 'string' || !valor.trim()) return 0;
@@ -225,17 +195,11 @@ function parseNumerico(valor) {
     return isNaN(resultado) ? 0 : resultado;
 }
 
-/**
- * Formata um número para o padrão de moeda brasileiro (BRL).
- */
 function formatarMoeda(valor) {
     if (typeof valor !== 'number' || isNaN(valor)) return "R$ 0,00";
     return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
-/**
- * Associa uma cor a cada item de uma lista de forma sequencial e sem repetição.
- */
 function gerarMapaDeCores(listaDeItens) {
     listaDeItens.forEach(item => {
         if (!mapaDeCores[item]) {
@@ -249,11 +213,141 @@ function gerarMapaDeCores(listaDeItens) {
     });
 }
 
+// --- Funções da Tela de Contratos (COM A CORREÇÃO DO BUG) ---
+
+function renderizarPainelContratos(dadosContratos) {
+    const track = document.getElementById('contratos-slider-track');
+    const nav = document.getElementById('contratos-slider-nav');
+    if (!track || !nav) return;
+
+    track.innerHTML = '';
+    nav.innerHTML = '';
+    
+    if (window.sliderTimer) {
+        clearInterval(window.sliderTimer);
+    }
+
+    const contratosValidos = dadosContratos.filter(c => c['EMPRESA CONTRATADA'] && c['EMPRESA CONTRATADA'].trim() !== '');
+    if (contratosValidos.length === 0) return;
+
+    contratosValidos.forEach((contrato, index) => {
+        const empresa = contrato['EMPRESA CONTRATADA'];
+        const vigenciaTexto = contrato['VIGËNCIA'];
+        const nomeImagem = contrato.IMAGEM_URL;
+        
+        let statusClasse = 'contrato-ok';
+        let statusTexto = 'Em vigor';
+        const dataFimTexto = vigenciaTexto ? vigenciaTexto.split(' a ')[1] : null;
+
+        if (dataFimTexto) {
+            const [dia, mes, ano] = dataFimTexto.split('/');
+            const dataFim = new Date(ano, mes - 1, dia);
+            const hoje = new Date();
+            const dataAlerta = new Date();
+            dataAlerta.setMonth(hoje.getMonth() + 3);
+
+            if (dataFim < hoje) {
+                statusClasse = 'contrato-vencido';
+                statusTexto = 'Vencido';
+            } else if (dataFim <= dataAlerta) {
+                statusClasse = 'contrato-alerta';
+                statusTexto = 'Vence em breve';
+            }
+        }
+
+        const slide = document.createElement('div');
+        slide.className = 'contrato-slide';
+        slide.innerHTML = `
+            <div class="contrato-status ${statusClasse}" title="${statusTexto}"></div>
+            <img src="${CAMINHO_IMAGENS_EMPRESAS}${nomeImagem}" onerror="this.onerror=null; this.src='${CAMINHO_IMAGENS}placeholder.png';" alt="${empresa}">
+            <h5>${empresa}</h5>
+        `;
+        track.appendChild(slide);
+
+        slide.addEventListener('click', () => {
+            const modal = document.getElementById('contrato-detalhes');
+            
+            // **NOVA FUNÇÃO AUXILIAR**
+            // Esta função verifica se o valor é um link e o formata corretamente.
+            const preencherCampo = (elementId, valor) => {
+                const elemento = document.getElementById(elementId);
+                if (!elemento) return;
+
+                const valorTratado = valor || 'Não informado';
+
+                // Verifica se o valor parece ser uma URL
+                if (typeof valorTratado === 'string' && valorTratado.trim().startsWith('http')) {
+                    elemento.innerHTML = `<a href="${valorTratado}" target="_blank" rel="noopener noreferrer">Acessar Processo</a>`;
+                } else {
+                    elemento.textContent = valorTratado;
+                }
+            };
+            
+            // Preenche o nome da empresa (sempre texto)
+            const nomeEmpresaEl = document.getElementById('detalhe-contrato-nome-empresa');
+            if(nomeEmpresaEl) nomeEmpresaEl.textContent = contrato['EMPRESA CONTRATADA'] || 'Nome não disponível';
+
+            // **MODIFICAÇÃO AQUI**
+            // Agora usamos a nova função `preencherCampo` para todos os campos
+            preencherCampo('detalhe-contrato-gestor', contrato.GESTOR);
+            preencherCampo('detalhe-contrato-fiscal', contrato.FISCAL);
+            preencherCampo('detalhe-contrato-suplente', contrato.SUPLENTE);
+            preencherCampo('detalhe-contrato-cnpj', contrato.CNPJ);
+            preencherCampo('detalhe-contrato-vigencia', contrato['VIGËNCIA']);
+            preencherCampo('detalhe-contrato-responsavel', contrato['RESPONSÁVEL CONTRATADA']);
+            preencherCampo('detalhe-contrato-email', contrato.EMAIL);
+            preencherCampo('detalhe-contrato-telefone', contrato.TELEFONE);
+            
+            // Campos que podem conter links
+            preencherCampo('detalhe-contrato-processo', contrato['PROCESSO RAIZ']);
+            preencherCampo('detalhe-contrato-prorrogacao1', contrato['PRORROGAÇÃO 1']);
+            preencherCampo('detalhe-contrato-prorrogacao2', contrato['PRORROGAÇÃO 2']);
+            preencherCampo('detalhe-contrato-repactuacao1', contrato['REPACTUAÇÃO 1']);
+            preencherCampo('detalhe-contrato-repactuacao2', contrato['REPACTUAÇÃO 2']);
+            
+            modal.classList.add('visivel');
+        });
+
+        const dot = document.createElement('div');
+        dot.className = 'dot';
+        dot.addEventListener('click', () => goToSlide(index));
+        nav.appendChild(dot);
+    });
+    
+    let slideAtual = 0;
+    const slides = document.querySelectorAll('.contrato-slide');
+    const dots = document.querySelectorAll('.slider-nav .dot');
+    const tempoTotalTela = 120000;
+    const intervaloSlide = slides.length > 0 ? tempoTotalTela / slides.length : tempoTotalTela;
+
+    function goToSlide(n) {
+        if (!slides.length || !dots.length) return;
+        slideAtual = (n + slides.length) % slides.length;
+        track.style.transform = `translateX(-${slideAtual * 100}%)`;
+        dots.forEach(dot => dot.classList.remove('ativo'));
+        dots[slideAtual].classList.add('ativo');
+        reiniciarTimerSlider();
+    }
+
+    function proximoSlide() {
+        goToSlide(slideAtual + 1);
+    }
+
+    function reiniciarTimerSlider() {
+        clearInterval(window.sliderTimer);
+        window.sliderTimer = setInterval(proximoSlide, intervaloSlide);
+    }
+
+    document.getElementById('fechar-detalhes-contrato').addEventListener('click', () => {
+        document.getElementById('contrato-detalhes').classList.remove('visivel');
+    });
+
+    goToSlide(0);
+}
+
+
 // --- Funções da Nova Tela de Desempenho ---
 
-/**
- * Limpa os dados de desempenho, removendo espaços extras dos nomes das colunas.
- */
 function limparDadosDesempenho(dados) {
     return dados.map(item => {
         const itemLimpo = {};
@@ -265,9 +359,6 @@ function limparDadosDesempenho(dados) {
     });
 }
 
-/**
- * Preenche os menus de filtro na tela de Desempenho da Frota.
- */
 function popularFiltrosDesempenho(dados) {
     const filtroMes = document.getElementById('filtro-mes-desempenho');
     const filtroDiretoria = document.getElementById('filtro-diretoria-desempenho');
@@ -284,6 +375,7 @@ function popularFiltrosDesempenho(dados) {
     const combustiveisUnicos = [...new Set(dadosComData.map(item => item['Tipo Combustível']))].sort();
 
     const criarOpcoes = (selectElement, opcoes, valorPadrao = 'Todos') => {
+        if (!selectElement) return;
         selectElement.innerHTML = `<option value="Todos">${valorPadrao}</option>`;
         opcoes.forEach(opcao => {
             if (opcao) {
@@ -302,9 +394,6 @@ function popularFiltrosDesempenho(dados) {
     criarOpcoes(filtroCombustivel, combustiveisUnicos, 'Todos os Tipos');
 }
 
-/**
- * Adiciona o event listener ao botão de filtro da tela de Desempenho.
- */
 function configurarEventListenerDesempenho() {
     const botaoFiltrar = document.getElementById('botao-filtrar-desempenho');
     if (botaoFiltrar) {
@@ -314,9 +403,6 @@ function configurarEventListenerDesempenho() {
     }
 }
 
-/**
- * Atualiza os KPIs e gráficos da tela de Desempenho com base nos filtros selecionados.
- */
 function atualizarPainelDesempenho() {
     const mesSelecionado = document.getElementById('filtro-mes-desempenho').value;
     const diretoriaSelecionada = document.getElementById('filtro-diretoria-desempenho').value;
@@ -442,9 +528,6 @@ function atualizarPainelDesempenho() {
 
 // --- Funções da Tela de Custos Fixos ---
 
-/**
- * Preenche os menus de filtro na tela de Custos Fixos.
- */
 function popularFiltros(dados) {
     const filtroMes = document.getElementById('filtro-mes');
     const filtroEmpresa = document.getElementById('filtro-empresa');
@@ -471,9 +554,6 @@ function popularFiltros(dados) {
     });
 }
 
-/**
- * Adiciona o event listener ao botão de filtro da tela de Custos Fixos.
- */
 function configurarEventListeners() {
     const botaoFiltrar = document.getElementById('botao-filtrar');
     if(!botaoFiltrar) return;
@@ -485,9 +565,6 @@ function configurarEventListeners() {
     });
 }
 
-/**
- * Atualiza os KPIs e gráficos da tela de Custos Fixos com base nos filtros selecionados.
- */
 function atualizarDashboard(dados, filtros) {
     const anoAtual = new Date().getFullYear();
     const dadosAnoInteiro = dados.filter(d => d.Ano && parseNumerico(d.Ano) === anoAtual);
@@ -575,9 +652,6 @@ function atualizarDashboard(dados, filtros) {
 
 // --- Funções da Tela de Frota ---
 
-/**
- * Renderiza os cards de veículos na tela de Controle de Frota.
- */
 function renderizarPainelFrota(dadosVeiculos) {
     const frotaGrid = document.getElementById('frota-grid');
     if (!frotaGrid) return;
@@ -645,164 +719,10 @@ function renderizarPainelFrota(dadosVeiculos) {
         document.getElementById('frota-detalhes').classList.remove('visivel');
      });
 }
-
-// --- Funções da Tela de Contratos (ATUALIZADA) ---
-
-/**
- * Renderiza o slider de contratos na tela correspondente.
- */
-function renderizarPainelContratos(dadosContratos) {
-    const track = document.getElementById('contratos-slider-track');
-    const nav = document.getElementById('contratos-slider-nav');
-    const filtroEmpresa = document.getElementById('filtro-contrato-empresa');
-    if (!track || !nav || !filtroEmpresa) return;
-
-    track.innerHTML = '';
-    nav.innerHTML = '';
-    
-    // Limpa o timer do slider anterior, se existir
-    if (window.sliderTimer) {
-        clearInterval(window.sliderTimer);
-    }
-
-    const contratosValidos = dadosContratos.filter(c => c['EMPRESA CONTRATADA'] && c['VIGËNCIA']);
-    if (contratosValidos.length === 0) return;
-
-    // Popula o dropdown de seleção
-    filtroEmpresa.innerHTML = ''; 
-    contratosValidos.forEach((contrato, index) => {
-        const option = document.createElement('option');
-        option.value = index;
-        option.textContent = contrato['EMPRESA CONTRATADA'];
-        filtroEmpresa.appendChild(option);
-    });
-
-    contratosValidos.forEach((contrato, index) => {
-        const empresa = contrato['EMPRESA CONTRATADA'];
-        const vigenciaTexto = contrato['VIGËNCIA'];
-        const nomeImagem = contrato.IMAGEM_URL;
-        
-        // --- Lógica para status do contrato ---
-        let statusClasse = 'contrato-ok';
-        let statusTexto = 'Em vigor';
-        const dataFimTexto = vigenciaTexto ? vigenciaTexto.split(' a ')[1] : null;
-
-        if (dataFimTexto) {
-            const [dia, mes, ano] = dataFimTexto.split('/');
-            const dataFim = new Date(ano, mes - 1, dia);
-            const hoje = new Date();
-            const dataAlerta = new Date();
-            dataAlerta.setMonth(hoje.getMonth() + 3);
-
-            if (dataFim < hoje) {
-                statusClasse = 'contrato-vencido';
-                statusTexto = 'Vencido';
-            } else if (dataFim <= dataAlerta) {
-                statusClasse = 'contrato-alerta';
-                statusTexto = 'Vence em breve';
-            }
-        }
-
-        // --- Criação do Slide ---
-        const slide = document.createElement('div');
-        slide.className = 'contrato-slide';
-        slide.innerHTML = `
-            <div class="contrato-status ${statusClasse}" title="${statusTexto}"></div>
-            <img src="${CAMINHO_IMAGENS_EMPRESAS}${nomeImagem}" onerror="this.onerror=null; this.src='${CAMINHO_IMAGENS}placeholder.png';" alt="${empresa}">
-            <h5>${empresa}</h5>
-        `;
-        track.appendChild(slide);
-
-        // --- Evento de clique para mostrar detalhes ---
-        slide.addEventListener('click', () => {
-            const modal = document.getElementById('contrato-detalhes');
-            
-            // Função auxiliar para preencher os campos
-            const preencherDetalhe = (id, valor) => {
-                const elemento = document.getElementById(id);
-                if (elemento) {
-                    elemento.textContent = valor || 'Não informado';
-                }
-            };
-
-            preencherDetalhe('detalhe-contrato-nome-empresa', contrato['EMPRESA CONTRATADA']);
-            preencherDetalhe('detalhe-contrato-gestor', contrato.GESTOR);
-            preencherDetalhe('detalhe-contrato-fiscal', contrato.FISCAL);
-            preencherDetalhe('detalhe-contrato-suplente', contrato.SUPLENTE);
-            preencherDetalhe('detalhe-contrato-cnpj', contrato.CNPJ);
-            preencherDetalhe('detalhe-contrato-vigencia', contrato['VIGËNCIA']);
-            preencherDetalhe('detalhe-contrato-prorrogacao1', contrato['1ªPRORROGAÇÃO']);
-            preencherDetalhe('detalhe-contrato-prorrogacao2', contrato['2ªPRORROGAÇÃO']);
-            preencherDetalhe('detalhe-contrato-repactuacao1', contrato['1ªREPACTUAÇÃO']);
-            preencherDetalhe('detalhe-contrato-repactuacao2', contrato['2ªREPACTUAÇÃO']);
-            preencherDetalhe('detalhe-contrato-responsavel', contrato['RESPONSÁVEL']);
-            preencherDetalhe('detalhe-contrato-email', contrato.EMAIL);
-            preencherDetalhe('detalhe-contrato-telefone', contrato.TELEFONE);
-            
-            // Lógica para o link do processo SEI
-            const itemProcesso = document.getElementById('item-contrato-processo');
-            const spanProcesso = document.getElementById('detalhe-contrato-processo');
-            if (contrato.PROCESSO_URL && contrato.PROCESSO_URL.trim() !== '') {
-                spanProcesso.innerHTML = `<a href="${contrato.PROCESSO_URL}" target="_blank">Acessar Processo</a>`;
-                itemProcesso.style.display = 'list-item';
-            } else {
-                spanProcesso.innerHTML = 'Não informado';
-                itemProcesso.style.display = 'list-item'; 
-            }
-
-            modal.classList.add('visivel');
-        });
-
-        // --- Criação do Ponto de Navegação ---
-        const dot = document.createElement('div');
-        dot.className = 'dot';
-        dot.addEventListener('click', () => goToSlide(index));
-        nav.appendChild(dot);
-    });
-    
-    // --- Lógica de Controle do Slider ---
-    let slideAtual = 0;
-    const slides = document.querySelectorAll('.contrato-slide');
-    const dots = document.querySelectorAll('.slider-nav .dot');
-    const tempoTotalTela = 120000;
-    const intervaloSlide = slides.length > 0 ? tempoTotalTela / slides.length : tempoTotalTela;
-
-    function goToSlide(n) {
-        slideAtual = (n + slides.length) % slides.length;
-        track.style.transform = `translateX(-${slideAtual * 100}%)`;
-        dots.forEach(dot => dot.classList.remove('ativo'));
-        dots[slideAtual].classList.add('ativo');
-        filtroEmpresa.value = slideAtual;
-        reiniciarTimerSlider();
-    }
-
-    function proximoSlide() {
-        goToSlide(slideAtual + 1);
-    }
-
-    function reiniciarTimerSlider() {
-        clearInterval(window.sliderTimer);
-        window.sliderTimer = setInterval(proximoSlide, intervaloSlide);
-    }
-
-    filtroEmpresa.addEventListener('change', () => {
-        goToSlide(parseInt(filtroEmpresa.value, 10));
-    });
-
-    document.getElementById('fechar-detalhes-contrato').addEventListener('click', () => {
-        document.getElementById('contrato-detalhes').classList.remove('visivel');
-    });
-
-    goToSlide(0);
-}
-
 // =======================================================
 // --- FUNÇÃO AUXILIAR PARA RENDERIZAÇÃO DE GRÁFICOS ---
 // =======================================================
 
-/**
- * Renderiza um gráfico usando a biblioteca Chart.js em um elemento canvas.
- */
 function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColors = null) {
     const canvas = document.getElementById(canvasId);
     if (!canvas) { return; }
@@ -816,7 +736,7 @@ function renderizarGrafico(canvasId, tipo, labels, data, labelDataset, pointColo
     const dataset = {
         label: labelDataset,
         data: data,
-        backgroundColor: tipo === 'line' ? '#3498db50' : backgroundColors,
+        backgroundColor: tipo === 'line' ? 'rgba(52, 152, 219, 0.5)' : backgroundColors,
         borderColor: tipo === 'line' ? '#3498db' : backgroundColors,
         borderWidth: tipo === 'line' ? 2 : 1,
         fill: tipo === 'line'
