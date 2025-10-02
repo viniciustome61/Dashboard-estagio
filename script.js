@@ -218,6 +218,7 @@ function gerarMapaDeCores(listaDeItens) {
 function renderizarPainelContratos(dadosContratos) {
     const track = document.getElementById('contratos-slider-track');
     const nav = document.getElementById('contratos-slider-nav');
+    // A variável filtroEmpresa foi removida daqui
     if (!track || !nav) return;
 
     track.innerHTML = '';
@@ -229,6 +230,8 @@ function renderizarPainelContratos(dadosContratos) {
 
     const contratosValidos = dadosContratos.filter(c => c['EMPRESA CONTRATADA'] && c['EMPRESA CONTRATADA'].trim() !== '');
     if (contratosValidos.length === 0) return;
+
+    // A lógica de popular o dropdown foi removida daqui
 
     contratosValidos.forEach((contrato, index) => {
         const empresa = contrato['EMPRESA CONTRATADA'];
@@ -267,15 +270,12 @@ function renderizarPainelContratos(dadosContratos) {
         slide.addEventListener('click', () => {
             const modal = document.getElementById('contrato-detalhes');
             
-            // **NOVA FUNÇÃO AUXILIAR**
-            // Esta função verifica se o valor é um link e o formata corretamente.
             const preencherCampo = (elementId, valor) => {
                 const elemento = document.getElementById(elementId);
                 if (!elemento) return;
 
                 const valorTratado = valor || 'Não informado';
 
-                // Verifica se o valor parece ser uma URL
                 if (typeof valorTratado === 'string' && valorTratado.trim().startsWith('http')) {
                     elemento.innerHTML = `<a href="${valorTratado}" target="_blank" rel="noopener noreferrer">Acessar Processo</a>`;
                 } else {
@@ -283,12 +283,9 @@ function renderizarPainelContratos(dadosContratos) {
                 }
             };
             
-            // Preenche o nome da empresa (sempre texto)
             const nomeEmpresaEl = document.getElementById('detalhe-contrato-nome-empresa');
             if(nomeEmpresaEl) nomeEmpresaEl.textContent = contrato['EMPRESA CONTRATADA'] || 'Nome não disponível';
 
-            // **MODIFICAÇÃO AQUI**
-            // Agora usamos a nova função `preencherCampo` para todos os campos
             preencherCampo('detalhe-contrato-gestor', contrato.GESTOR);
             preencherCampo('detalhe-contrato-fiscal', contrato.FISCAL);
             preencherCampo('detalhe-contrato-suplente', contrato.SUPLENTE);
@@ -298,7 +295,6 @@ function renderizarPainelContratos(dadosContratos) {
             preencherCampo('detalhe-contrato-email', contrato.EMAIL);
             preencherCampo('detalhe-contrato-telefone', contrato.TELEFONE);
             
-            // Campos que podem conter links
             preencherCampo('detalhe-contrato-processo', contrato['PROCESSO RAIZ']);
             preencherCampo('detalhe-contrato-prorrogacao1', contrato['PRORROGAÇÃO 1']);
             preencherCampo('detalhe-contrato-prorrogacao2', contrato['PRORROGAÇÃO 2']);
@@ -326,6 +322,7 @@ function renderizarPainelContratos(dadosContratos) {
         track.style.transform = `translateX(-${slideAtual * 100}%)`;
         dots.forEach(dot => dot.classList.remove('ativo'));
         dots[slideAtual].classList.add('ativo');
+        // A linha que sincronizava o dropdown foi removida daqui
         reiniciarTimerSlider();
     }
 
@@ -337,6 +334,8 @@ function renderizarPainelContratos(dadosContratos) {
         clearInterval(window.sliderTimer);
         window.sliderTimer = setInterval(proximoSlide, intervaloSlide);
     }
+    
+    // O event listener para o dropdown foi removido daqui
 
     document.getElementById('fechar-detalhes-contrato').addEventListener('click', () => {
         document.getElementById('contrato-detalhes').classList.remove('visivel');
